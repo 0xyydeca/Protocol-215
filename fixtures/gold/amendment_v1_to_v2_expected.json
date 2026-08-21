@@ -1,0 +1,97 @@
+{
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "2.0",
+  "synthetic": true,
+  "changes": [
+    {
+      "change_id": "CHG-001-LAB-CONTACT",
+      "concept_type": "central_lab_contact",
+      "operation": "update",
+      "before": {"email": "lab-v1@example.test"},
+      "after": {"email": "lab-v2@example.test"},
+      "expected_risk_tier": "GREEN",
+      "expected_evidence_page": 10,
+      "expected_evidence_section": "SEC-LAB-CONTACT",
+      "expected_affected_artifacts": [
+        "contact_directory",
+        "lab_manual",
+        "site_shipping_instructions"
+      ]
+    },
+    {
+      "change_id": "CHG-002-PK-6H",
+      "concept_type": "pk_timepoint",
+      "operation": "add",
+      "before": {
+        "timepoints_hours": [0.0, 0.5, 1.0, 2.0, 4.0]
+      },
+      "after": {
+        "timepoints_hours": [0.0, 0.5, 1.0, 2.0, 4.0, 6.0],
+        "added_timepoint_hours": 6.0
+      },
+      "expected_risk_tier": "AMBER",
+      "expected_evidence_page": 8,
+      "expected_evidence_section": "SEC-PK",
+      "expected_affected_artifacts": [
+        "schedule_of_activities",
+        "pk_kit_inventory",
+        "courier_plan",
+        "sample_storage",
+        "participant_visit_calendar",
+        "edc_pk_forms"
+      ]
+    },
+    {
+      "change_id": "CHG-003-FASTING-4H",
+      "concept_type": "post_dose_fasting",
+      "operation": "update",
+      "before": {"hours": 2},
+      "after": {"hours": 4},
+      "expected_risk_tier": "AMBER",
+      "expected_evidence_page": 8,
+      "expected_evidence_section": "SEC-FASTING",
+      "expected_affected_artifacts": [
+        "schedule_of_activities",
+        "site_meal_instructions",
+        "participant_instructions",
+        "visit_nursing_checklist"
+      ]
+    },
+    {
+      "change_id": "CHG-004-EDC-TEMP",
+      "concept_type": "edc_field",
+      "operation": "add",
+      "before": {"field": null},
+      "after": {"field": "sample_processing_temperature_c", "unit": "celsius"},
+      "expected_risk_tier": "GREEN",
+      "expected_evidence_page": 12,
+      "expected_evidence_section": "SEC-DATA",
+      "expected_affected_artifacts": [
+        "edc_specification",
+        "lab_manual_change_request",
+        "site_data-entry_guide"
+      ]
+    },
+    {
+      "change_id": "CHG-005-CONDITIONAL-ECG",
+      "concept_type": "conditional_repeat_ecg",
+      "operation": "add",
+      "before": {"conditional_repeat_required": false},
+      "after": {
+        "conditional_repeat_required": true,
+        "trigger": "AURORA ECG review trigger (fictional protocol-defined)"
+      },
+      "expected_risk_tier": "AMBER",
+      "expected_evidence_page": 9,
+      "expected_evidence_section": "SEC-ECG",
+      "expected_affected_artifacts": [
+        "schedule_of_activities",
+        "ecg_procedure",
+        "site_training",
+        "edc_ecg_forms"
+      ],
+      "notes": "Autonomous clinical activation remains RED even if planning is AMBER."
+    }
+  ]
+}

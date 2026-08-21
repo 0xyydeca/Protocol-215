@@ -1,0 +1,19 @@
+{
+  "dataset_id": "03_visit_window",
+  "name": "Visit-window modification",
+  "mode": "measured",
+  "synthetic": true,
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "1.1-window",
+  "changes": [
+    {
+      "change_id": "CHG-ACT-ADD-ACT-VISIT-WINDOW",
+      "concept_type": "scheduled_activity",
+      "operation": "add",
+      "expected_risk_tier": "AMBER",
+      "expected_evidence_page": 8,
+      "expected_affected_artifacts": ["schedule_of_activities"]
+    }
+  ]
+}

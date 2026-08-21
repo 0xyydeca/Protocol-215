@@ -1,0 +1,133 @@
+- id: "1"
+  title: Scaffold monorepo, AURORA fixtures, and Cloud Run health stub
+  description: >-
+    Create the hackathon project skeleton and seed AURORA-101 synthetic sites,
+    participants, and scenario config per aurora-101-scenario.md (CAP-5 data foundation; CAP-13 stub).
+  spec_checkpoint: true
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Synthetic-only. No real clinical integrations. Prefer min Cloud Run instances=0 from day one.
+- id: "2"
+  title: Amendment intake with hash, GCS, Firestore run, and Pub/Sub
+  description: >-
+    Implement CAP-1 deterministic intake: validate PDFs, SHA-256, store objects,
+    create run_id, detect duplicate pairs, publish amendment.received.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Keep intake fully deterministic (no Gemini). Idempotent against duplicate starts.
+- id: "3"
+  title: Compile Protocol IR with schema and evidence citations
+  description: >-
+    Implement CAP-2: Gemini→schema-validated Protocol IR for v1 and v2 with page/section/confidence
+    on every fact; fail closed on malformed output.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Use GEMINI_MODEL env only. No uncited facts. Store IR in Firestore keyed by run_id/version.
+- id: "4"
+  title: Semantic gold-standard five-change amendment diff
+  description: >-
+    Implement CAP-3 so AURORA v1→v2 yields the five controlled changes with evidence links
+    and intended risk candidates from aurora-101-scenario.md.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Concept-level diff only (not word redline). Add fixture assertion for 100% gold recall.
+- id: "5"
+  title: Deterministic downstream impact graph
+  description: >-
+    Implement CAP-4 dependency expansion so each semantic change maps to required
+    operational artifacts (PK sample fan-out mandatory).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Deterministic engine—do not ask Gemini to invent edges. Persist graph nodes/edges on the run.
+- id: "6"
+  title: Trial Twin rehearsal and concrete findings
+  description: >-
+    Implement CAP-5 rehearsal across sites/participants/visits and emit findings including
+    Phoenix P002 courier/storage block and Boston/Seattle activation blocks.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Evaluate Change×Site×Participant×Visit×EffectiveDate. Never retrofit completed visits (P001).
+- id: "7"
+  title: Allowlisted action plan and deterministic policy gate
+  description: >-
+    Implement CAP-6 and CAP-7: propose only allowlisted tools; classify Green/Amber/Red in code
+    per risk-policy.md (model suggestions non-authoritative).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Reject unknown tools. Red stays non-executable even if later UI approve is attempted.
+- id: "8"
+  title: Execute Green tools with idempotent audit writes
+  description: >-
+    Implement CAP-8 synthetic Firestore mutations for demo Green path (contact, training tasks,
+    kit reservation, draft EDC/lab specs) with full before/after audit metadata.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Idempotency keys required. Duplicate Pub/Sub delivery must not duplicate mutations.
+- id: "9"
+  title: Amber approval pause and same-invocation resume
+  description: >-
+    Implement CAP-9 human confirmation for the central P002 conflict: approval UI fields,
+    single-use approval, resume same ADK invocation_id without replaying Green work.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Re-run policy gate immediately before any post-approval execution. Wrong invocation_id must fail.
+- id: "10"
+  title: Operational invariants and Amendment Release Manifest
+  description: >-
+    Implement CAP-10 and CAP-11: run invariants then emit JSON + print-ready HTML release manifest
+    with actions-by-outcome and audit references.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Successful final manifest must show zero unresolved contradictions for the happy demo path after approval.
+- id: "11"
+  title: UI Launch, Semantic Redline, and Impact Graph
+  description: >-
+    Implement CAP-12 screens 1–3 wired to live run state, including evidence navigation from change cards.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Not a chatbot shell. Primary CTA is Start Amendment Preflight.
+- id: "12"
+  title: UI Timeline, Findings, and Action Ledger with Approval
+  description: >-
+    Implement CAP-12 screens 4–6 including the 215-day timeline, concrete findings, ledger columns,
+    and the central approval panel.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Timeline must show Phoenix conflict and Boston/Seattle blocked activation states.
+- id: "13"
+  title: UI Manifest screen and downloads
+  description: >-
+    Implement CAP-12 screen 7 rendering the Amendment Release Manifest with JSON and HTML download.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Manifest fields must match CAP-11 / workflow-stages Stage 11.
+- id: "14"
+  title: Resilience and safety test suite
+  description: >-
+    Implement the required tests in evaluation-and-tests.md covering duplicates, crashes, malformed
+    Gemini output, prompt injection, approval misuse, and Red proposals.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Prompt-injection PDF must never cause tool execution. Target metrics are gates, not claims until measured.
+- id: "15"
+  title: Google Cloud deploy evidence and four-minute demo dry-run
+  description: >-
+    Implement CAP-13: deploy frontend/API/worker with visible Pub/Sub→ADK→Firestore→Logging proof
+    and rehearse demo-script.md under four minutes.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Capture screenshots/logs for judges. Cap max instances; keep min=0. No speculative scope adds.

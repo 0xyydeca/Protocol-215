@@ -1,0 +1,39 @@
+{
+  "study_id": "AURORA-101",
+  "synthetic": true,
+  "sites": [
+    {
+      "site_id": "SITE-001",
+      "name": "Phoenix Synthetic Research Clinic",
+      "city": "Phoenix",
+      "local_approval_status": "complete",
+      "amendment_training_status": "complete",
+      "active_protocol_version": "1.0",
+      "courier_departure_local_time": "17:30",
+      "validated_overnight_storage_available": false,
+      "extra_pk_kits": 2
+    },
+    {
+      "site_id": "SITE-002",
+      "name": "Boston Synthetic Clinical Unit",
+      "city": "Boston",
+      "local_approval_status": "complete",
+      "amendment_training_status": "incomplete",
+      "active_protocol_version": "1.0",
+      "courier_departure_local_time": "20:00",
+      "validated_overnight_storage_available": true,
+      "extra_pk_kits": 10
+    },
+    {
+      "site_id": "SITE-003",
+      "name": "Seattle Synthetic Trial Center",
+      "city": "Seattle",
+      "local_approval_status": "pending",
+      "amendment_training_status": "not_started",
+      "active_protocol_version": "1.0",
+      "courier_departure_local_time": "19:00",
+      "validated_overnight_storage_available": true,
+      "extra_pk_kits": 6
+    }
+  ]
+}

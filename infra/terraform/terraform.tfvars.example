@@ -1,0 +1,24 @@
+# Example Terraform variables for Protocol 215.
+# Copy to terraform.tfvars locally — DO NOT commit terraform.tfvars or state files.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+
+project_id   = "YOUR_GCP_PROJECT_ID"
+region       = "us-central1"
+bucket_suffix = "demo-REPLACE_ME" # must yield a globally unique bucket name
+
+gemini_model     = "gemini-3.5-flash"
+web_image_tag    = "dev"
+worker_image_tag = "dev"
+
+max_instances = 2
+min_instances = 0
+
+worker_timeout_seconds = 300
+worker_concurrency     = 1
+
+firestore_location      = "nam5"
+firestore_database_id   = "(default)"
+create_firestore_database = true
+
+# No API keys, service-account JSON, or billing account IDs belong here.

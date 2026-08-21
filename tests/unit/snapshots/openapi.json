@@ -1,0 +1,1214 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Protocol 215 API",
+    "description": "Clinical Amendment Preflight \u2014 synthetic proof of concept",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Healthz",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "summary": "Readyz",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Readyz Readyz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs": {
+      "post": {
+        "summary": "Create Run",
+        "operationId": "create_run_api_runs_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_run_api_runs_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Runs",
+        "operationId": "list_runs_api_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RunListItem"
+                  },
+                  "title": "Response List Runs Api Runs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}": {
+      "get": {
+        "summary": "Get Run",
+        "operationId": "get_run_api_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/changes": {
+      "get": {
+        "summary": "Get Changes",
+        "operationId": "get_changes_api_runs__run_id__changes_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Changes Api Runs  Run Id  Changes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/impact": {
+      "get": {
+        "summary": "Get Impact",
+        "operationId": "get_impact_api_runs__run_id__impact_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactGraphResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/findings": {
+      "get": {
+        "summary": "Get Findings",
+        "operationId": "get_findings_api_runs__run_id__findings_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Findings Api Runs  Run Id  Findings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/actions": {
+      "get": {
+        "summary": "Get Actions",
+        "operationId": "get_actions_api_runs__run_id__actions_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Actions Api Runs  Run Id  Actions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/approvals": {
+      "get": {
+        "summary": "Get Approvals",
+        "operationId": "get_approvals_api_runs__run_id__approvals_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Approvals Api Runs  Run Id  Approvals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/approvals/{approval_id}": {
+      "post": {
+        "summary": "Submit Approval",
+        "operationId": "submit_approval_api_runs__run_id__approvals__approval_id__post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "approval_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Approval Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDecisionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/audit": {
+      "get": {
+        "summary": "Get Audit",
+        "operationId": "get_audit_api_runs__run_id__audit_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Audit Api Runs  Run Id  Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/audit/verify": {
+      "get": {
+        "summary": "Verify Audit",
+        "operationId": "verify_audit_api_runs__run_id__audit_verify_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Verify Audit Api Runs  Run Id  Audit Verify Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/manifest": {
+      "get": {
+        "summary": "Get Manifest",
+        "operationId": "get_manifest_api_runs__run_id__manifest_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Manifest Api Runs  Run Id  Manifest Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/reset": {
+      "post": {
+        "summary": "Demo Reset",
+        "description": "Clear synthetic demo runs/actions/approvals/manifests.\n\nCloud mode requires confirm=true (or CONFIRM_DEMO_RESET=yes via script).\nDoes not delete fixtures/ source PDFs or GCP infrastructure.",
+        "operationId": "demo_reset_api_demo_reset_post",
+        "parameters": [
+          {
+            "name": "confirm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Confirm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoResetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApprovalDecisionRequest": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/ApprovalStatus"
+          },
+          "expected_state_version": {
+            "type": "integer",
+            "title": "Expected State Version"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment",
+            "default": ""
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "synthetic_operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "expected_state_version"
+        ],
+        "title": "ApprovalDecisionRequest"
+      },
+      "ApprovalDecisionResponse": {
+        "properties": {
+          "approval_id": {
+            "type": "string",
+            "title": "Approval Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/ApprovalStatus"
+          },
+          "event_published": {
+            "type": "boolean",
+            "title": "Event Published"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Approval recorded; resume event published."
+          }
+        },
+        "type": "object",
+        "required": [
+          "approval_id",
+          "run_id",
+          "decision",
+          "event_published"
+        ],
+        "title": "ApprovalDecisionResponse"
+      },
+      "ApprovalStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "expired",
+          "consumed"
+        ],
+        "title": "ApprovalStatus"
+      },
+      "Body_create_run_api_runs_post": {
+        "properties": {
+          "old_protocol": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Old Protocol",
+            "description": "Prior protocol PDF"
+          },
+          "new_protocol": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "New Protocol",
+            "description": "Amended protocol PDF"
+          },
+          "study_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study Id"
+          },
+          "from_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Version"
+          },
+          "to_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "old_protocol",
+          "new_protocol"
+        ],
+        "title": "Body_create_run_api_runs_post"
+      },
+      "CreateRunResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus"
+          },
+          "study_id": {
+            "type": "string",
+            "title": "Study Id"
+          },
+          "from_version": {
+            "type": "string",
+            "title": "From Version"
+          },
+          "to_version": {
+            "type": "string",
+            "title": "To Version"
+          },
+          "old_sha256": {
+            "type": "string",
+            "title": "Old Sha256"
+          },
+          "new_sha256": {
+            "type": "string",
+            "title": "New Sha256"
+          },
+          "old_pages": {
+            "type": "integer",
+            "title": "Old Pages"
+          },
+          "new_pages": {
+            "type": "integer",
+            "title": "New Pages"
+          },
+          "event_published": {
+            "type": "boolean",
+            "title": "Event Published"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Run accepted; workflow started asynchronously."
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "status",
+          "study_id",
+          "from_version",
+          "to_version",
+          "old_sha256",
+          "new_sha256",
+          "old_pages",
+          "new_pages",
+          "event_published"
+        ],
+        "title": "CreateRunResponse"
+      },
+      "DemoResetResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "sites_restored": {
+            "type": "integer",
+            "title": "Sites Restored",
+            "default": 0
+          },
+          "participants_restored": {
+            "type": "integer",
+            "title": "Participants Restored",
+            "default": 0
+          },
+          "runs_cleared": {
+            "type": "integer",
+            "title": "Runs Cleared",
+            "default": 0
+          },
+          "objects_cleared": {
+            "type": "integer",
+            "title": "Objects Cleared",
+            "default": 0
+          },
+          "fixtures_preserved": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fixtures Preserved"
+          },
+          "twin_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Twin Snapshot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "message"
+        ],
+        "title": "DemoResetResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ImpactGraphResponse": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count",
+            "default": 0
+          },
+          "edge_count": {
+            "type": "integer",
+            "title": "Edge Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ImpactGraphResponse"
+      },
+      "PendingApprovalSummary": {
+        "properties": {
+          "approval_id": {
+            "type": "string",
+            "title": "Approval Id"
+          },
+          "action_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Id"
+          },
+          "tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Name"
+          },
+          "affected_site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Site Id"
+          },
+          "affected_participant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Participant Id"
+          },
+          "expected_state_version": {
+            "type": "integer",
+            "title": "Expected State Version",
+            "default": 0
+          },
+          "reason_approval_required": {
+            "type": "string",
+            "title": "Reason Approval Required",
+            "default": ""
+          },
+          "interrupt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interrupt Id"
+          },
+          "invocation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invocation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approval_id"
+        ],
+        "title": "PendingApprovalSummary"
+      },
+      "RunListItem": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "study_id": {
+            "type": "string",
+            "title": "Study Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus"
+          },
+          "from_version": {
+            "type": "string",
+            "title": "From Version"
+          },
+          "to_version": {
+            "type": "string",
+            "title": "To Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "current_stage": {
+            "type": "string",
+            "title": "Current Stage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "study_id",
+          "status",
+          "from_version",
+          "to_version",
+          "created_at",
+          "current_stage"
+        ],
+        "title": "RunListItem"
+      },
+      "RunStatusResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "study_id": {
+            "type": "string",
+            "title": "Study Id"
+          },
+          "from_version": {
+            "type": "string",
+            "title": "From Version"
+          },
+          "to_version": {
+            "type": "string",
+            "title": "To Version"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus"
+          },
+          "current_stage": {
+            "type": "string",
+            "title": "Current Stage"
+          },
+          "progress": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event"
+          },
+          "pending_approval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PendingApprovalSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completed_action_count": {
+            "type": "integer",
+            "title": "Completed Action Count",
+            "default": 0
+          },
+          "blocked_action_count": {
+            "type": "integer",
+            "title": "Blocked Action Count",
+            "default": 0
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "execution_mode": {
+            "type": "string",
+            "title": "Execution Mode"
+          },
+          "state_version": {
+            "type": "integer",
+            "title": "State Version",
+            "default": 0
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkpoint"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "event_sequence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Event Sequence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "study_id",
+          "from_version",
+          "to_version",
+          "status",
+          "current_stage",
+          "progress",
+          "execution_mode",
+          "created_at"
+        ],
+        "title": "RunStatusResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkflowStatus": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "ARTIFACTS_REGISTERED",
+          "COMPILING",
+          "ANALYZING",
+          "REHEARSING",
+          "PLANNING",
+          "EXECUTING_SAFE_ACTIONS",
+          "AWAITING_APPROVAL",
+          "RESUMING",
+          "VERIFYING",
+          "COMPLETED",
+          "COMPLETED_WITH_BLOCKS",
+          "FAILED_RETRYABLE",
+          "FAILED_TERMINAL",
+          "RECEIVED",
+          "INTAKE_COMPLETE",
+          "COMPILING_IR",
+          "DIFFING",
+          "IMPACTING",
+          "GATING",
+          "EXECUTING_GREEN",
+          "EXECUTING_APPROVED_AMBER",
+          "MANIFEST_READY",
+          "PARTIAL",
+          "FAILED"
+        ],
+        "title": "WorkflowStatus"
+      }
+    }
+  }
+}

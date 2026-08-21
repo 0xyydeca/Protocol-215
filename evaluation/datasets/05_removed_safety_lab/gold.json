@@ -1,0 +1,20 @@
+{
+  "dataset_id": "05_removed_safety_lab",
+  "name": "Removed safety laboratory requirement",
+  "mode": "measured",
+  "synthetic": true,
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "1.1-safety-removed",
+  "changes": [
+    {
+      "change_id": "CHG-ECG-SAFETY-REMOVE-ECG-BASE",
+      "concept_type": "safety_monitoring_removal",
+      "operation": "update",
+      "expected_risk_tier": "RED",
+      "expected_evidence_page": 11,
+      "expected_affected_artifacts": ["ecg_procedure", "schedule_of_activities"]
+    }
+  ],
+  "notes": "Represented as removal of required baseline/predose ECG safety monitoring (RED, non-executable)."
+}

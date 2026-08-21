@@ -1,0 +1,49 @@
+{
+  "elapsed_seconds": {
+    "reset_to_upload": 0.079,
+    "upload_to_approval_pause": 0.002,
+    "approve_to_manifest": 0.003,
+    "total_wall": 0.094
+  },
+  "judge_facing_budget_seconds": 240,
+  "within_4_minutes": true,
+  "mode": {
+    "execution_mode": "local",
+    "compiler_mode": "fake",
+    "gemini_model": "gemini-3.5-flash",
+    "note": "Fake Compiler \u2014 do not call live"
+  },
+  "checks": {
+    "five_semantic_changes": true,
+    "green_actions_present": true,
+    "boston_training_block": true,
+    "seattle_approval_block": true,
+    "p001_immutability": true,
+    "phoenix_p002_conflict": true,
+    "amber_pending": true,
+    "successful_resume": true,
+    "verified_manifest": true,
+    "resume_after_approval": true
+  },
+  "all_demo_path_checks_passed": true,
+  "clicks": [
+    "POST /api/demo/reset",
+    "GET /readyz (mode indicators)",
+    "POST /api/runs (upload v1+v2)",
+    "poll GET /api/runs/{id} until AWAITING_APPROVAL",
+    "GET .../changes",
+    "GET .../findings",
+    "GET .../actions",
+    "POST approval (Approve)",
+    "GET .../manifest",
+    "GET .../audit/verify"
+  ],
+  "run_id": "run-55886b59-165c-41f4-8e46-e90acecc838a",
+  "change_count": 5,
+  "finding_count": 10,
+  "audit_ok": true,
+  "reset_twin": {
+    "sites": 3,
+    "participants": 5
+  }
+}

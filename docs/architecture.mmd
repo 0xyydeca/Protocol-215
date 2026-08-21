@@ -1,0 +1,20 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8eef1', 'primaryTextColor': '#0b1f2a', 'primaryBorderColor': '#1a5f7a', 'lineColor': '#4d606c', 'fontFamily': 'IBM Plex Sans'}}}%%
+flowchart LR
+  Upload["Upload<br/>v1 + v2 PDFs"] --> GCS["Cloud Storage<br/>private objects"]
+  GCS --> PubSub["Pub/Sub<br/>amendment.received"]
+  PubSub --> Worker["Cloud Run<br/>ADK worker"]
+  Worker --> Gemini["Gemini<br/>tool-less IR"]
+  Gemini --> Twin["Trial Twin<br/>sites · participants"]
+  Twin --> Policy["Policy gate<br/>GREEN / AMBER / RED"]
+  Policy --> Tools["Firestore tools<br/>idempotent GREEN"]
+  Tools --> Approve["Human approval<br/>web UI"]
+  Approve --> Resume["Pub/Sub<br/>amendment.resume"]
+  Resume --> Inv["Invariants"]
+  Inv --> Manifest["Release Manifest"]
+
+  classDef cloud fill:#dbe7f0,stroke:#1a5f7a,color:#0b1f2a;
+  classDef human fill:#f5edd8,stroke:#9a5b00,color:#0b1f2a;
+  classDef safe fill:#dceee6,stroke:#1d6b4f,color:#0b1f2a;
+  class GCS,PubSub,Worker,Gemini,Tools,Resume cloud
+  class Approve human
+  class Inv,Manifest safe

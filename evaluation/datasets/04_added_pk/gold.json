@@ -1,0 +1,26 @@
+{
+  "dataset_id": "04_added_pk",
+  "name": "Added PK sample",
+  "mode": "measured",
+  "synthetic": true,
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "1.1-pk",
+  "changes": [
+    {
+      "change_id": "CHG-002-PK-6H",
+      "concept_type": "pk_timepoint",
+      "operation": "add",
+      "expected_risk_tier": "AMBER",
+      "expected_evidence_page": 8,
+      "expected_affected_artifacts": [
+        "schedule_of_activities",
+        "pk_kit_inventory",
+        "courier_plan",
+        "sample_storage",
+        "participant_visit_calendar",
+        "edc_pk_forms"
+      ]
+    }
+  ]
+}

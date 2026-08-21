@@ -1,0 +1,65 @@
+{
+  "study_id": "AURORA-101",
+  "synthetic": true,
+  "reference_date": "2026-08-21",
+  "participants": [
+    {
+      "participant_id": "P001",
+      "site_id": "SITE-001",
+      "consent_version": "1.0",
+      "day1_status": "completed",
+      "day1_completed": true,
+      "day1_immutable": true,
+      "next_visit": "Day 8",
+      "planned_dose_time_local": null
+    },
+    {
+      "participant_id": "P002",
+      "site_id": "SITE-001",
+      "consent_version": "1.0",
+      "day1_status": "scheduled_tomorrow",
+      "day1_completed": false,
+      "day1_immutable": false,
+      "next_visit": "Day 1",
+      "planned_dose_time_local": "12:00",
+      "v2_pk_6h_local_time": "18:00",
+      "conflict_with_courier": {
+        "courier_departure_local_time": "17:30",
+        "sample_time_local": "18:00",
+        "overnight_storage_available": false,
+        "conflict_id": "PHX-P002-PK6H-COURIER"
+      }
+    },
+    {
+      "participant_id": "P003",
+      "site_id": "SITE-002",
+      "consent_version": "1.0",
+      "day1_status": "scheduled_in_three_days",
+      "day1_completed": false,
+      "day1_immutable": false,
+      "next_visit": "Day 1",
+      "planned_dose_time_local": null
+    },
+    {
+      "participant_id": "P004",
+      "site_id": "SITE-002",
+      "consent_version": null,
+      "day1_status": "not_consented",
+      "day1_completed": false,
+      "day1_immutable": false,
+      "next_visit": "screening",
+      "screening_planned": true,
+      "planned_dose_time_local": null
+    },
+    {
+      "participant_id": "P005",
+      "site_id": "SITE-003",
+      "consent_version": "1.0",
+      "day1_status": "scheduled_next_week",
+      "day1_completed": false,
+      "day1_immutable": false,
+      "next_visit": "Day 1",
+      "planned_dose_time_local": null
+    }
+  ]
+}

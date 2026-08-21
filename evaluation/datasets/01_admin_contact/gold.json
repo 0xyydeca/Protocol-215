@@ -1,0 +1,20 @@
+{
+  "dataset_id": "01_admin_contact",
+  "name": "Administrative contact update",
+  "mode": "measured",
+  "synthetic": true,
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "1.1-admin",
+  "changes": [
+    {
+      "change_id": "CHG-001-LAB-CONTACT",
+      "concept_type": "central_lab_contact",
+      "operation": "update",
+      "expected_risk_tier": "GREEN",
+      "expected_evidence_page": 10,
+      "expected_affected_artifacts": ["contact_directory", "lab_manual", "site_shipping_instructions"]
+    }
+  ],
+  "notes": "GREEN administrative path only."
+}

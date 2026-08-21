@@ -1,0 +1,19 @@
+{
+  "dataset_id": "02_optional_field",
+  "name": "New optional field",
+  "mode": "measured",
+  "synthetic": true,
+  "study_id": "AURORA-101",
+  "from_version": "1.0",
+  "to_version": "1.1-edc",
+  "changes": [
+    {
+      "change_id": "CHG-EDC-ADD-optional_site_notes",
+      "concept_type": "edc_field",
+      "operation": "add",
+      "expected_risk_tier": "GREEN",
+      "expected_evidence_page": 12,
+      "expected_affected_artifacts": ["edc_specification"]
+    }
+  ]
+}
