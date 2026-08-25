@@ -8,7 +8,8 @@ from pathlib import Path
 from protocol215.adapters.audit_log import HashChainedAuditLog
 from protocol215.adapters.clock import SystemClock
 from protocol215.adapters.event_bus_inprocess import InProcessEventBus
-from protocol215.adapters.fakes import FakeActionPlanner, FakeProtocolCompiler
+from protocol215.adapters.fakes import FakeActionPlanner
+from protocol215.adapters.gemini.factory import build_protocol_compiler
 from protocol215.adapters.identifiers import UUIDIdentifierGenerator
 from protocol215.adapters.object_store_local import LocalFileObjectStore
 from protocol215.adapters.state_store_firestore import FirestoreStateStore
@@ -143,7 +144,7 @@ def build_container(settings: Settings) -> AppContainer:
         objects=objects,
         events=events,
         audit=audit,
-        compiler=FakeProtocolCompiler(),
+        compiler=build_protocol_compiler(settings),
         planner=FakeActionPlanner(include_amber=True),
         clock=clock,
         ids=ids,

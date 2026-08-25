@@ -15,7 +15,8 @@ from protocol215.adapters.audit_log import HashChainedAuditLog
 from protocol215.adapters.clock import SystemClock
 from protocol215.adapters.event_bus_inprocess import InProcessEventBus
 from protocol215.adapters.fake_explainer import FakeChangeExplainer
-from protocol215.adapters.fakes import FakeActionPlanner, FakeProtocolCompiler
+from protocol215.adapters.fakes import FakeActionPlanner
+from protocol215.adapters.gemini.factory import build_protocol_compiler
 from protocol215.adapters.identifiers import UUIDIdentifierGenerator
 from protocol215.adapters.object_store_local import LocalFileObjectStore
 from protocol215.adapters.state_store_sqlite import SQLiteStateStore
@@ -69,7 +70,7 @@ class LocalWorkflowDriver:
         self.clock = SystemClock()
         self.ids = UUIDIdentifierGenerator()
         self.audit = HashChainedAuditLog(self.state, self.clock, self.ids)
-        self.compiler = FakeProtocolCompiler()
+        self.compiler = build_protocol_compiler()
         self.planner = planner or FakeActionPlanner(include_amber=include_amber)
         self.service = AmendmentAppService(
             state=self.state,

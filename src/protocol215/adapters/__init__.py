@@ -10,6 +10,7 @@ from protocol215.adapters.event_bus_inprocess import InProcessEventBus
 from protocol215.adapters.fakes import FakeActionPlanner, FakeProtocolCompiler
 from protocol215.adapters.gemini import VertexGeminiProtocolCompiler
 from protocol215.adapters.gemini.factory import build_protocol_compiler
+from protocol215.adapters.gemini.probe import VertexGeminiProbe
 from protocol215.adapters.identifiers import (
     DeterministicIdentifierGenerator,
     UUIDIdentifierGenerator,
@@ -125,19 +126,6 @@ class FakeGeminiProbe:
         return True, f"fake Gemini ready (model={self._model})"
 
 
-class VertexGeminiProbe:
-    name = "gemini"
-
-    def __init__(self, project: str | None, model: str) -> None:
-        self._project = project
-        self._model = model
-
-    def check(self) -> tuple[bool, str]:
-        if not self._project:
-            return False, "Vertex Gemini requires GOOGLE_CLOUD_PROJECT"
-        return False, "Vertex Gemini not configured in scaffold (use GEMINI_BACKEND=fake)"
-
-
 def build_probes(settings: Settings) -> list[HealthProbe]:
     probes: list[HealthProbe] = []
 
@@ -163,7 +151,13 @@ def build_probes(settings: Settings) -> list[HealthProbe]:
     if settings.gemini_backend == GeminiBackend.FAKE:
         probes.append(FakeGeminiProbe(settings.gemini_model))
     else:
-        probes.append(VertexGeminiProbe(settings.google_cloud_project, settings.gemini_model))
+        probes.append(
+            VertexGeminiProbe(
+                settings.google_cloud_project,
+                settings.google_cloud_location,
+                settings.gemini_model,
+            )
+        )
 
     return probes
 

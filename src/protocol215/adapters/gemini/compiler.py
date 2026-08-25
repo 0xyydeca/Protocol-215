@@ -23,6 +23,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from protocol215.adapters.gemini.client import build_vertex_genai_client
 from protocol215.adapters.gemini.prompts import SYSTEM_INSTRUCTION, USER_PROMPT_TEMPLATE
 from protocol215.adapters.gemini.types import CompilationResult, CompilerObservability
 from protocol215.adapters.gemini.validation import (
@@ -63,15 +64,11 @@ class VertexGeminiProtocolCompiler:
         self.last_observability: CompilerObservability | None = None
 
     def _get_client(self) -> Any:
-        if self._client is not None:
-            return self._client
-        from google import genai
-
-        self._client = genai.Client(
-            vertexai=True,
-            project=self.project,
-            location=self.location,
-        )
+        if self._client is None:
+            self._client = build_vertex_genai_client(
+                project=self.project,
+                location=self.location,
+            )
         return self._client
 
     def compile(
