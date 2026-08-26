@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from protocol215.application.impact import artifacts_for_change
 from protocol215.domain.enums import ChangeOperation, RiskTier
 from protocol215.domain.models import EvidenceReference, ProtocolIR, SemanticChange
@@ -16,8 +18,8 @@ def _change(
     change_id: str,
     concept_type: str,
     operation: ChangeOperation,
-    before: dict | None,
-    after: dict | None,
+    before: dict[str, Any] | None,
+    after: dict[str, Any] | None,
     old_evidence: list[EvidenceReference] | None = None,
     new_evidence: list[EvidenceReference] | None = None,
     evidence: list[EvidenceReference] | None = None,
@@ -189,10 +191,20 @@ def diff_protocol_irs(before: ProtocolIR, after: ProtocolIR) -> list[SemanticCha
                     candidate_risk=RiskTier.AMBER,
                 )
             )
-        elif b_r is not None and a_r is not None and (b_r.value != a_r.value or b_r.unit != a_r.unit):
+        elif (
+            b_r is not None and a_r is not None and (b_r.value != a_r.value or b_r.unit != a_r.unit)
+        ):
             concept = "post_dose_fasting" if a_r.kind == "fasting" else "participant_restriction"
-            before_payload: dict = {"kind": b_r.kind, "value": b_r.value, "unit": b_r.unit}
-            after_payload: dict = {"kind": a_r.kind, "value": a_r.value, "unit": a_r.unit}
+            before_payload: dict[str, Any] = {
+                "kind": b_r.kind,
+                "value": b_r.value,
+                "unit": b_r.unit,
+            }
+            after_payload: dict[str, Any] = {
+                "kind": a_r.kind,
+                "value": a_r.value,
+                "unit": a_r.unit,
+            }
             if concept == "post_dose_fasting":
                 before_payload = {"hours": b_r.value, **before_payload}
                 after_payload = {"hours": a_r.value, **after_payload}

@@ -267,6 +267,8 @@ def test_openapi_generation_and_snapshot(client: TestClient) -> None:
         expected = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
         assert normalized == expected
     else:
-        SNAPSHOT.write_text(json.dumps(normalized, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        SNAPSHOT.write_text(
+            json.dumps(normalized, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         # First write still asserts structure
         assert "/api/runs" in normalized["paths"]

@@ -88,7 +88,7 @@ def artifacts_for_change(change: SemanticChange) -> list[str]:
 
 
 def build_impact_graph(changes: list[SemanticChange]) -> ImpactGraph:
-    """Backward-compatible artifact-only graph (change → artifacts). """
+    """Backward-compatible artifact-only graph (change → artifacts)."""
     return build_layered_impact_graph(changes=changes)
 
 
@@ -236,9 +236,7 @@ def build_layered_impact_graph(
                 )
             )
             # Prefer finding → action when a finding for this change exists.
-            finding_for_change = [
-                f for f in findings if change.change_id in f.change_ids
-            ]
+            finding_for_change = [f for f in findings if change.change_id in f.change_ids]
             if finding_for_change:
                 fid = sorted(finding_for_change, key=lambda f: f.finding_id)[0].finding_id
                 add_edge(

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.unit.fakes_firestore import FakeFirestore, FakeFirestoreModule
 
 from protocol215.adapters.event_bus_pubsub import (
     PubSubEventBus,
@@ -30,7 +31,6 @@ from protocol215.domain.models import (
     AuditEvent,
     WorkflowRun,
 )
-from tests.unit.fakes_firestore import FakeFirestore, FakeFirestoreModule
 
 
 def _run(run_id: str = "run-1") -> WorkflowRun:
@@ -41,7 +41,7 @@ def _run(run_id: str = "run-1") -> WorkflowRun:
         to_version="2.0",
         status=WorkflowStatus.CREATED,
         state_version=3,
-        created_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        created_at=datetime(2026, 8, 21, tzinfo=UTC),
     )
 
 
@@ -131,7 +131,7 @@ def test_firestore_approval_consumption_and_stale_version() -> None:
     decision = ApprovalDecision(
         approval_id="apr-1",
         decision=ApprovalStatus.APPROVED,
-        decided_at=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        decided_at=datetime(2026, 8, 21, tzinfo=UTC),
     )
     updated = store.consume_approval(
         approval_id="apr-1",
@@ -175,7 +175,7 @@ def test_firestore_audit_persistence() -> None:
         sequence_number=1,
         event_type="tool.executed",
         actor="system",
-        timestamp=datetime(2026, 8, 21, tzinfo=timezone.utc),
+        timestamp=datetime(2026, 8, 21, tzinfo=UTC),
         input_hash="a",
         output_hash="b",
         previous_event_hash="0" * 64,

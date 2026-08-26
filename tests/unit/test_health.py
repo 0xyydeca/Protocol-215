@@ -13,10 +13,10 @@ from protocol215.adapters import (
     LocalObjectStoreProbe,
     MemoryStateStoreProbe,
 )
-from protocol215.adapters.gemini.factory import build_protocol_compiler
-from protocol215.adapters.gemini.probe import VertexGeminiProbe
 from protocol215.adapters.fakes import FakeProtocolCompiler
 from protocol215.adapters.gemini.compiler import VertexGeminiProtocolCompiler
+from protocol215.adapters.gemini.factory import build_protocol_compiler
+from protocol215.adapters.gemini.probe import VertexGeminiProbe
 from protocol215.config import (
     AppEnv,
     GeminiBackend,

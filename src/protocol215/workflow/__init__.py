@@ -1,5 +1,7 @@
 """Workflow package — resumable Google ADK 2.x amendment graph."""
 
+from typing import Any
+
 # Keep package import light to avoid circular imports with policy.
 # Import driver/graph from their modules directly:
 #   from protocol215.workflow.driver import LocalWorkflowDriver
@@ -16,7 +18,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name in {"LocalWorkflowDriver", "WorkflowDriveResult"}:
         from protocol215.workflow import driver as _driver
 

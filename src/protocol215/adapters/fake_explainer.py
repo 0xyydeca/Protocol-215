@@ -42,7 +42,6 @@ class FakeChangeExplainer:
                 )
             else:
                 out[change.change_id] = (
-                    f"{change.operation.value} on {change.concept_type} "
-                    f"({change.change_id})."
+                    f"{change.operation.value} on {change.concept_type} ({change.change_id})."
                 )
         return out

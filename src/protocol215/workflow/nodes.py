@@ -7,7 +7,7 @@ from typing import Any
 from google.adk.events.event import Event
 from google.adk.events.request_input import RequestInput
 from google.adk.workflow import node
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from protocol215.application.amendment_analysis import AmendmentAnalysisPipeline
 from protocol215.application.hashing import sha256_hex
@@ -18,7 +18,7 @@ from protocol215.domain.enums import (
     RiskTier,
     WorkflowStatus,
 )
-from protocol215.domain.models import ActionProposal, SessionMetadata
+from protocol215.domain.models import SessionMetadata
 from protocol215.policy.approval import build_approval_request, validate_approval_not_stale
 from protocol215.policy.matrix import authorize_proposal, is_executable
 from protocol215.simulator.twin import rehearse_amendment
@@ -247,7 +247,7 @@ def policy_gate(ctx: Any) -> Any:
         route = "safe" if not rt.amber_proposal_ids and not rt.red_proposal_ids else "safe"
         if rt.red_proposal_ids and not rt.green_proposal_ids and not rt.amber_proposal_ids:
             route = "blocked"
-        yield Event(output=skipped, route=route)
+        yield Event(output=skipped, route=route)  # type: ignore[call-arg]
         return
     rt = runtime_from_ctx(ctx)
     green: list[str] = []
@@ -269,16 +269,13 @@ def policy_gate(ctx: Any) -> Any:
     ctx.state["amber_proposal_ids"] = amber
     ctx.state["red_proposal_ids"] = red
     # RED never routes to an executor path that can run them.
-    if red and not green and not amber:
-        route = "blocked"
-    else:
-        route = "safe"
+    route = "blocked" if red and not green and not amber else "safe"
     payload = _finish(
         ctx,
         "PolicyGate",
         {"green": green, "amber": amber, "red": red, "route": route},
     )
-    yield Event(output=payload, route=route)
+    yield Event(output=payload, route=route)  # type: ignore[call-arg]
 
 
 @node(name="SafeActionExecutor")
@@ -331,11 +328,11 @@ def approval_router(ctx: Any) -> Any:
     amber_ids = rt.amber_proposal_ids or ctx.state.get("amber_proposal_ids") or []
     if skipped:
         route = "awaiting" if amber_ids else "skip"
-        yield Event(output=skipped, route=route)
+        yield Event(output=skipped, route=route)  # type: ignore[call-arg]
         return
     if not amber_ids:
         payload = _finish(ctx, "ApprovalRouter", {"route": "skip"})
-        yield Event(output=payload, route="skip")
+        yield Event(output=payload, route="skip")  # type: ignore[call-arg]
         return
 
     run = rt.run()
@@ -378,8 +375,7 @@ def approval_router(ctx: Any) -> Any:
             f"({primary.tool_name})."
         ),
         consequences_of_approval=(
-            "Approved AMBER actions execute under re-checked policy; "
-            "RED remains non-executable."
+            "Approved AMBER actions execute under re-checked policy; RED remains non-executable."
         ),
         consequences_of_rejection=(
             "AMBER actions stay blocked; GREEN work already done is retained; "
@@ -418,7 +414,7 @@ def approval_router(ctx: Any) -> Any:
             "affected_site": primary.site_id,
         },
     )
-    yield Event(output=payload, route="awaiting")
+    yield Event(output=payload, route="awaiting")  # type: ignore[call-arg]
 
 
 @node(name="HumanApproval", rerun_on_resume=True)
@@ -445,7 +441,7 @@ async def human_approval(ctx: Any) -> Any:
             rt.append_event("HumanApproval:duplicate_resume")
             prior = rt.state.get_approval_decision(request.approval_id)
             was_approved = prior is not None and prior.decision == ApprovalStatus.APPROVED
-            yield Event(
+            yield Event(  # type: ignore[call-arg]
                 output={"duplicate": True, "approval_id": approval_id},
                 route="approved" if was_approved else "rejected",
             )
@@ -476,7 +472,7 @@ async def human_approval(ctx: Any) -> Any:
         )
         rt.append_event("HumanApproval")
         rt.mark_node_complete("HumanApproval")
-        yield Event(
+        yield Event(  # type: ignore[call-arg]
             output={
                 "approved": resp.approved,
                 "approval_id": request.approval_id,
@@ -584,12 +580,9 @@ def complete_run(ctx: Any) -> dict[str, Any]:
     if skipped:
         return skipped
     rt = runtime_from_ctx(ctx)
-    run = rt.run()
     has_blocks = bool(rt.red_proposal_ids) or bool(rt.diagnostics.get("invariant_failures"))
     # Rejection path without amber execution still completes with blocks if amber pending rejected
-    status = (
-        WorkflowStatus.COMPLETED_WITH_BLOCKS if has_blocks else WorkflowStatus.COMPLETED
-    )
+    status = WorkflowStatus.COMPLETED_WITH_BLOCKS if has_blocks else WorkflowStatus.COMPLETED
     rt.set_status(status, checkpoint="CompleteRun")
     return _finish(ctx, "CompleteRun", {"status": status.value})
 
@@ -599,9 +592,7 @@ def _failure_handler_impl(ctx: Any) -> dict[str, Any]:
     detail = ctx.state.get("failure_detail") or rt.diagnostics.get("failure_detail") or "unknown"
     fclass = ctx.state.get("failure_class") or rt.diagnostics.get("failure_class") or "unknown"
     retryable = bool(ctx.state.get("failure_retryable") or rt.diagnostics.get("failure_retryable"))
-    status = (
-        WorkflowStatus.FAILED_RETRYABLE if retryable else WorkflowStatus.FAILED_TERMINAL
-    )
+    status = WorkflowStatus.FAILED_RETRYABLE if retryable else WorkflowStatus.FAILED_TERMINAL
     run = rt.run()
     rt.state.save_run(
         run.model_copy(

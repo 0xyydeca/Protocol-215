@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -86,18 +86,16 @@ class GenerateReleaseManifestArgs(BaseToolArgs):
 
 
 ToolArgs = Annotated[
-    Union[
-        UpdateContactDirectoryArgs,
-        CreateSiteTrainingTaskArgs,
-        ReserveSampleKitsArgs,
-        CreateLabManualChangeRequestArgs,
-        CreateEdcChangeSpecificationArgs,
-        CreateCourierExceptionTaskArgs,
-        CreateReconsentReviewArgs,
-        DraftParticipantTransitionPlanArgs,
-        RequestSiteActivationReviewArgs,
-        GenerateReleaseManifestArgs,
-    ],
+    UpdateContactDirectoryArgs
+    | CreateSiteTrainingTaskArgs
+    | ReserveSampleKitsArgs
+    | CreateLabManualChangeRequestArgs
+    | CreateEdcChangeSpecificationArgs
+    | CreateCourierExceptionTaskArgs
+    | CreateReconsentReviewArgs
+    | DraftParticipantTransitionPlanArgs
+    | RequestSiteActivationReviewArgs
+    | GenerateReleaseManifestArgs,
     Field(discriminator="tool_name"),
 ]
 

@@ -118,7 +118,7 @@ def parse_pubsub_push_envelope(
     attrs = message.get("attributes") or {}
     if delivery_attempt is None and "deliveryAttempt" in (body or {}):
         try:
-            delivery_attempt = int(body["deliveryAttempt"])  # type: ignore[index]
+            delivery_attempt = int(body["deliveryAttempt"])
         except (TypeError, ValueError):
             delivery_attempt = None
     updates: dict[str, Any] = {}

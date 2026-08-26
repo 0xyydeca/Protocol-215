@@ -59,9 +59,7 @@ class FakeProtocolCompiler:
         version = version_hint
         if version is None:
             version = (
-                "2.0"
-                if ("Protocol Version: 2.0" in text or b"v2.0" in data[:2000])
-                else "1.0"
+                "2.0" if ("Protocol Version: 2.0" in text or b"v2.0" in data[:2000]) else "1.0"
             )
         ir = build_aurora_v2_ir() if version.startswith("2") else build_aurora_v1_ir()
         obs = CompilerObservability(

@@ -71,7 +71,7 @@ def validate_pdf_upload(
     if getattr(reader, "is_encrypted", False):
         # Try empty password; still reject if encryption remains.
         try:
-            if reader.decrypt("") == 0:  # type: ignore[attr-defined]
+            if reader.decrypt("") == 0:
                 raise ApiError(
                     error_code=ApiErrorCode.ENCRYPTED_PDF,
                     message="Encrypted PDFs are not accepted.",

@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 from pypdf import PdfWriter
+from tests.unit.fakes_firestore import FakeFirestore, FakeFirestoreModule
 
 from protocol215.adapters.audit_log import HashChainedAuditLog, verify_audit_chain
 from protocol215.adapters.clock import DeterministicClock
@@ -53,7 +54,6 @@ from protocol215.policy.matrix import authorize_proposal, is_executable
 from protocol215.simulator.twin import load_participants, load_sites, rehearse_amendment
 from protocol215.workflow.driver import LocalWorkflowDriver
 from protocol215.workflow.errors import WorkflowFailure
-from tests.unit.fakes_firestore import FakeFirestore, FakeFirestoreModule
 
 
 def _run(coro):
@@ -606,9 +606,7 @@ def test_22_participant_visit_already_completed() -> None:
         participants=load_participants(),
     )
     assert any(
-        f.participant_id == "P001"
-        or "P001" in f.summary
-        or "immutable" in f.summary.lower()
+        f.participant_id == "P001" or "P001" in f.summary or "immutable" in f.summary.lower()
         for f in findings
     )
 
@@ -659,9 +657,7 @@ def test_24_same_protocol_pair_submitted_twice(tmp_path: Path) -> None:
 
 def test_25_audit_event_modified_after_creation() -> None:
     state = InMemoryStateStore()
-    audit = HashChainedAuditLog(
-        state, DeterministicClock(), DeterministicIdentifierGenerator()
-    )
+    audit = HashChainedAuditLog(state, DeterministicClock(), DeterministicIdentifierGenerator())
     run_id = "run-audit"
     state.save_run(
         WorkflowRun(

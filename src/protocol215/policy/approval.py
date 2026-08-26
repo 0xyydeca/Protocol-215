@@ -150,11 +150,7 @@ def validate_approval_not_stale(
             failure_class=FailureClass.STALE_APPROVAL,
         )
 
-    if (
-        current_policy_hash
-        and request.policy_hash
-        and current_policy_hash != request.policy_hash
-    ):
+    if current_policy_hash and request.policy_hash and current_policy_hash != request.policy_hash:
         raise WorkflowFailure(
             "policy changed since approval request",
             failure_class=FailureClass.STALE_APPROVAL,

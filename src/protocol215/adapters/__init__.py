@@ -132,9 +132,7 @@ def build_probes(settings: Settings) -> list[HealthProbe]:
     if settings.object_store_backend == ObjectStoreBackend.LOCAL:
         probes.append(LocalObjectStoreProbe(settings.local_object_store_path))
     else:
-        probes.append(
-            GcsObjectStoreProbe(settings.google_cloud_project, settings.gcs_bucket)
-        )
+        probes.append(GcsObjectStoreProbe(settings.google_cloud_project, settings.gcs_bucket))
 
     if settings.state_store_backend == StateStoreBackend.MEMORY:
         probes.append(MemoryStateStoreProbe())

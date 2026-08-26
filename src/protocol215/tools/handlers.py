@@ -38,7 +38,10 @@ def handle_update_contact_directory(
     sites: list[SiteState],
     scratch: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], list[SiteState]]:
-    before = {"contacts": dict(scratch.get("contacts", {})), "email": scratch.get("contacts", {}).get(args.role)}
+    before = {
+        "contacts": dict(scratch.get("contacts", {})),
+        "email": scratch.get("contacts", {}).get(args.role),
+    }
     contacts = dict(scratch.get("contacts", {}))
     contacts[args.role] = args.email
     scratch["contacts"] = contacts

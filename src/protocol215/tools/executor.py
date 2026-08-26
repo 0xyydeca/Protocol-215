@@ -67,9 +67,7 @@ class ToolExecutor:
         key = proposal.idempotency_key or build_idempotency_key(
             run_id=run_id,
             action_type=proposal.tool_name,
-            target_id=proposal.site_id
-            or proposal.participant_id
-            or proposal.proposal_id,
+            target_id=proposal.site_id or proposal.participant_id or proposal.proposal_id,
             protocol_version=protocol_version,
         )
 

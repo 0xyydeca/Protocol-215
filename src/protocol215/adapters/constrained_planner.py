@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from protocol215.domain.enums import FindingCode, RiskTier
 from protocol215.domain.models import (
     ActionProposal,
@@ -43,7 +45,7 @@ class ConstrainedActionPlanner:
         changes: list[SemanticChange],
         findings: list[RehearsalFinding],
         impact_graph: ImpactGraph | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Payload a Gemini planner is allowed to see."""
         return {
             "semantic_changes": [c.model_dump(mode="json") for c in changes],
@@ -68,9 +70,7 @@ class ConstrainedActionPlanner:
         findings: list[RehearsalFinding],
         impact_graph: ImpactGraph | None = None,
     ) -> list[ActionProposal]:
-        _ = self.planner_context(
-            changes=changes, findings=findings, impact_graph=impact_graph
-        )
+        _ = self.planner_context(changes=changes, findings=findings, impact_graph=impact_graph)
         proposals: list[ActionProposal] = []
         by_concept = {c.concept_type: c for c in changes}
         finding_by_code = {f.code: f for f in findings}
@@ -147,7 +147,10 @@ class ConstrainedActionPlanner:
                 )
             )
 
-        if FindingCode.PK_KITS_MAY_BE_REQUIRED.value in finding_by_code or "pk_timepoint" in by_concept:
+        if (
+            FindingCode.PK_KITS_MAY_BE_REQUIRED.value in finding_by_code
+            or "pk_timepoint" in by_concept
+        ):
             site_id = "SITE-001"
             pk = by_concept.get("pk_timepoint")
             add(
@@ -205,16 +208,19 @@ class ConstrainedActionPlanner:
                 )
 
         if self.include_amber:
-            if "post_dose_fasting" in by_concept or FindingCode.FASTING_REQUIRES_REVIEW.value in finding_by_code:
-                c = by_concept.get("post_dose_fasting")
+            if (
+                "post_dose_fasting" in by_concept
+                or FindingCode.FASTING_REQUIRES_REVIEW.value in finding_by_code
+            ):
+                fasting: SemanticChange | None = by_concept.get("post_dose_fasting")
                 add(
                     ActionProposal(
                         proposal_id=f"{run.run_id}-prop-reconsent-fast",
                         tool_name="create_reconsent_review",
                         participant_id="P002",
-                        change_ids=[c.change_id] if c else [],
+                        change_ids=[fasting.change_id] if fasting else [],
                         rationale="Fasting change requires reconsent review",
-                        evidence=(list(c.evidence) if c else [])
+                        evidence=(list(fasting.evidence) if fasting else [])
                         or [EvidenceReference(page=8, section_id="SEC-FASTING")],
                         args={
                             "participant_id": "P002",
@@ -223,16 +229,19 @@ class ConstrainedActionPlanner:
                         proposed_tier=RiskTier.AMBER,
                     )
                 )
-            if "conditional_repeat_ecg" in by_concept or FindingCode.ECG_REQUIRES_REVIEW.value in finding_by_code:
-                c = by_concept.get("conditional_repeat_ecg")
+            if (
+                "conditional_repeat_ecg" in by_concept
+                or FindingCode.ECG_REQUIRES_REVIEW.value in finding_by_code
+            ):
+                ecg: SemanticChange | None = by_concept.get("conditional_repeat_ecg")
                 add(
                     ActionProposal(
                         proposal_id=f"{run.run_id}-prop-reconsent-ecg",
                         tool_name="create_reconsent_review",
                         participant_id="P003",
-                        change_ids=[c.change_id] if c else [],
+                        change_ids=[ecg.change_id] if ecg else [],
                         rationale="Conditional ECG requires reconsent/procedure review",
-                        evidence=(list(c.evidence) if c else [])
+                        evidence=(list(ecg.evidence) if ecg else [])
                         or [EvidenceReference(page=9, section_id="SEC-ECG")],
                         args={
                             "participant_id": "P003",

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, Callable
+from typing import Any
 
 
 class _Snap:
@@ -19,7 +20,7 @@ class _Snap:
 
 
 class _DocRef:
-    def __init__(self, store: "FakeFirestore", path: str) -> None:
+    def __init__(self, store: FakeFirestore, path: str) -> None:
         self._store = store
         self.path = path
 
@@ -32,7 +33,7 @@ class _DocRef:
 
 
 class _Query:
-    def __init__(self, store: "FakeFirestore", collection: str, field: str, value: Any) -> None:
+    def __init__(self, store: FakeFirestore, collection: str, field: str, value: Any) -> None:
         self._store = store
         self._collection = collection
         self._field = field
@@ -48,7 +49,7 @@ class _Query:
 
 
 class _Collection:
-    def __init__(self, store: "FakeFirestore", name: str) -> None:
+    def __init__(self, store: FakeFirestore, name: str) -> None:
         self._store = store
         self.name = name
 
@@ -61,15 +62,11 @@ class _Collection:
 
     def stream(self) -> list[_Snap]:
         prefix = f"{self.name}/"
-        return [
-            _Snap(data)
-            for path, data in self._store._docs.items()
-            if path.startswith(prefix)
-        ]
+        return [_Snap(data) for path, data in self._store._docs.items() if path.startswith(prefix)]
 
 
 class _Transaction:
-    def __init__(self, store: "FakeFirestore") -> None:
+    def __init__(self, store: FakeFirestore) -> None:
         self._store = store
         self._writes: list[tuple[str, dict[str, Any]]] = []
 

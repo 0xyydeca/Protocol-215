@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from protocol215.domain.enums import FailureClass
 
 
@@ -14,7 +16,7 @@ class WorkflowFailure(Exception):
         *,
         failure_class: FailureClass,
         retryable: bool = False,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.failure_class = failure_class

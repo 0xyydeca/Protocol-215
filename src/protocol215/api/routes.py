@@ -35,8 +35,8 @@ def _container(request: Request) -> AppContainer:
 async def create_run(
     request: Request,
     background_tasks: BackgroundTasks,
-    old_protocol: UploadFile = File(..., description="Prior protocol PDF"),
-    new_protocol: UploadFile = File(..., description="Amended protocol PDF"),
+    old_protocol: UploadFile = File(..., description="Prior protocol PDF"),  # noqa: B008
+    new_protocol: UploadFile = File(..., description="Amended protocol PDF"),  # noqa: B008
     study_id: str | None = Form(None),
     from_version: str | None = Form(None),
     to_version: str | None = Form(None),
@@ -75,9 +75,7 @@ async def create_run(
                 details={"run_id": existing_id},
             )
 
-    run = container.service.create_run(
-        study_id=study, from_version=from_ver, to_version=to_ver
-    )
+    run = container.service.create_run(study_id=study, from_version=from_ver, to_version=to_ver)
     old_key = f"runs/{run.run_id}/protocols/v{from_ver}.pdf"
     new_key = f"runs/{run.run_id}/protocols/v{to_ver}.pdf"
     container.objects.put_bytes(old_key, old_bytes, content_type="application/pdf")

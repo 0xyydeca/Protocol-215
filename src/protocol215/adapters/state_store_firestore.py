@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -23,14 +23,12 @@ from protocol215.domain.models import (
     WorkflowRun,
 )
 
-T = TypeVar("T", bound=BaseModel)
-
 
 def _dump(model: BaseModel) -> dict[str, Any]:
     return model.model_dump(mode="json")
 
 
-def _load(model_cls: type[T], data: dict[str, Any] | None) -> T | None:
+def _load[T: BaseModel](model_cls: type[T], data: dict[str, Any] | None) -> T | None:
     if not data:
         return None
     # Strip Firestore-only metadata
@@ -112,11 +110,7 @@ class FirestoreStateStore:
 
     def list_protocol_artifacts(self, run_id: str) -> list[ProtocolArtifactRecord]:
         out: list[ProtocolArtifactRecord] = []
-        for snap in (
-            self._db.collection("protocol_versions")
-            .where("run_id", "==", run_id)
-            .stream()
-        ):
+        for snap in self._db.collection("protocol_versions").where("run_id", "==", run_id).stream():
             loaded = _load(ProtocolArtifactRecord, snap.to_dict())
             if loaded:
                 out.append(loaded)
@@ -145,9 +139,7 @@ class FirestoreStateStore:
         snap = self._db.collection("changes").document(run_id).get()
         if not snap.exists:
             return []
-        return [
-            SemanticChange.model_validate(i) for i in (snap.to_dict() or {}).get("items", [])
-        ]
+        return [SemanticChange.model_validate(i) for i in (snap.to_dict() or {}).get("items", [])]
 
     def save_sites(self, run_id: str, sites: list[SiteState]) -> None:
         self._db.collection("sites").document(run_id).set(
@@ -169,10 +161,7 @@ class FirestoreStateStore:
         snap = self._db.collection("participants").document(run_id).get()
         if not snap.exists:
             return []
-        return [
-            ParticipantState.model_validate(i)
-            for i in (snap.to_dict() or {}).get("items", [])
-        ]
+        return [ParticipantState.model_validate(i) for i in (snap.to_dict() or {}).get("items", [])]
 
     def save_findings(self, run_id: str, findings: list[RehearsalFinding]) -> None:
         self._db.collection("findings").document(run_id).set(
@@ -183,10 +172,7 @@ class FirestoreStateStore:
         snap = self._db.collection("findings").document(run_id).get()
         if not snap.exists:
             return []
-        return [
-            RehearsalFinding.model_validate(i)
-            for i in (snap.to_dict() or {}).get("items", [])
-        ]
+        return [RehearsalFinding.model_validate(i) for i in (snap.to_dict() or {}).get("items", [])]
 
     # --- actions + idempotency ---
     def save_action(self, run_id: str, action: ActionExecution) -> None:
@@ -228,11 +214,9 @@ class FirestoreStateStore:
         """Transaction: return existing action if idempotency key already written."""
         firestore = self._fs()
         key_ref = self._db.collection("action_keys").document(action.idempotency_key)
-        action_ref = self._db.collection("actions").document(
-            f"{run_id}__{action.execution_id}"
-        )
+        action_ref = self._db.collection("actions").document(f"{run_id}__{action.execution_id}")
 
-        @firestore.transactional
+        @firestore.transactional  # type: ignore[untyped-decorator]
         def _txn(transaction: Any) -> ActionExecution:
             key_snap = key_ref.get(transaction=transaction)
             if key_snap.exists:
@@ -258,7 +242,7 @@ class FirestoreStateStore:
             )
             return action
 
-        return _txn(self._db.transaction())
+        return cast(ActionExecution, _txn(self._db.transaction()))
 
     # --- approvals ---
     def save_approval_request(self, request: ApprovalRequest) -> None:
@@ -304,7 +288,7 @@ class FirestoreStateStore:
         run_ref = self._db.collection("runs").document(run_id)
         dec_ref = self._db.collection("approval_decisions").document(approval_id)
 
-        @firestore.transactional
+        @firestore.transactional  # type: ignore[untyped-decorator]
         def _txn(transaction: Any) -> ApprovalRequest:
             apr_snap = apr_ref.get(transaction=transaction)
             if not apr_snap.exists:
@@ -319,11 +303,7 @@ class FirestoreStateStore:
             run_snap = run_ref.get(transaction=transaction)
             if run_snap.exists:
                 run = WorkflowRun.model_validate(
-                    {
-                        k: v
-                        for k, v in (run_snap.to_dict() or {}).items()
-                        if not k.startswith("_")
-                    }
+                    {k: v for k, v in (run_snap.to_dict() or {}).items() if not k.startswith("_")}
                 )
                 if run.state_version != expected_state_version:
                     raise ValueError("run state version changed")
@@ -332,20 +312,16 @@ class FirestoreStateStore:
             transaction.set(dec_ref, self._with_meta(_dump(decision)))
             return updated
 
-        return _txn(self._db.transaction())
+        return cast(ApprovalRequest, _txn(self._db.transaction()))
 
     # --- audit ---
     def append_audit_event(self, event: AuditEvent) -> None:
         doc_id = f"{event.run_id}__{event.sequence_number:08d}"
-        self._db.collection("audit_events").document(doc_id).set(
-            self._with_meta(_dump(event))
-        )
+        self._db.collection("audit_events").document(doc_id).set(self._with_meta(_dump(event)))
 
     def list_audit_events(self, run_id: str) -> list[AuditEvent]:
         out: list[AuditEvent] = []
-        for snap in (
-            self._db.collection("audit_events").where("run_id", "==", run_id).stream()
-        ):
+        for snap in self._db.collection("audit_events").where("run_id", "==", run_id).stream():
             loaded = _load(AuditEvent, snap.to_dict())
             if loaded:
                 out.append(loaded)
@@ -369,7 +345,7 @@ class FirestoreStateStore:
         run_ref = self._db.collection("runs").document(manifest.run_id)
         man_ref = self._db.collection("manifests").document(manifest.run_id)
 
-        @firestore.transactional
+        @firestore.transactional  # type: ignore[untyped-decorator]
         def _txn(transaction: Any) -> AmendmentReleaseManifest:
             run_snap = run_ref.get(transaction=transaction)
             if not run_snap.exists:
@@ -387,7 +363,7 @@ class FirestoreStateStore:
             transaction.set(man_ref, self._with_meta(_dump(manifest)))
             return manifest
 
-        return _txn(self._db.transaction())
+        return cast(AmendmentReleaseManifest, _txn(self._db.transaction()))
 
     # --- sessions ---
     def save_session_metadata(self, meta: SessionMetadata) -> None:
@@ -404,7 +380,7 @@ class FirestoreStateStore:
         firestore = self._fs()
         ref = self._db.collection("processed_events").document(idempotency_key)
 
-        @firestore.transactional
+        @firestore.transactional  # type: ignore[untyped-decorator]
         def _txn(transaction: Any) -> bool:
             snap = ref.get(transaction=transaction)
             if snap.exists:

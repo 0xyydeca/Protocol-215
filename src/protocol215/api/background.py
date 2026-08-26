@@ -20,8 +20,13 @@ async def kick_amendment_received(container: AppContainer, run_id: str) -> None:
         run = container.state.get_run(run_id)
         if run is None:
             return
-        old_key = run.object_keys.get(run.from_version) or f"runs/{run_id}/protocols/v{run.from_version}.pdf"
-        new_key = run.object_keys.get(run.to_version) or f"runs/{run_id}/protocols/v{run.to_version}.pdf"
+        old_key = (
+            run.object_keys.get(run.from_version)
+            or f"runs/{run_id}/protocols/v{run.from_version}.pdf"
+        )
+        new_key = (
+            run.object_keys.get(run.to_version) or f"runs/{run_id}/protocols/v{run.to_version}.pdf"
+        )
         old_bytes = container.objects.get_bytes(old_key)
         new_bytes = container.objects.get_bytes(new_key)
         await asyncio.to_thread(_run_local_pipeline, container, run_id, old_bytes, new_bytes)
@@ -51,6 +56,7 @@ def _run_local_pipeline(
     """Deterministic local pipeline on API service state (async worker stand-in)."""
     from protocol215.application.amendment_analysis import AmendmentAnalysisPipeline
     from protocol215.domain.enums import RiskTier, WorkflowStatus
+    from protocol215.domain.models import ActionProposal
     from protocol215.policy.matrix import authorize_proposal
     from protocol215.simulator.twin import rehearse_amendment
 
@@ -98,9 +104,7 @@ def _run_local_pipeline(
         svc.state.save_session_metadata(meta.model_copy(update={"extra": extra}))
 
     set_status(WorkflowStatus.REHEARSING, "TrialTwinSimulator")
-    findings = rehearse_amendment(
-        changes=analysis.changes, sites=sites, participants=participants
-    )
+    findings = rehearse_amendment(changes=analysis.changes, sites=sites, participants=participants)
     svc.save_findings(run_id, findings)
 
     set_status(WorkflowStatus.PLANNING, "ActionPlanner")
@@ -112,7 +116,7 @@ def _run_local_pipeline(
         svc.state.save_session_metadata(meta.model_copy(update={"extra": extra}))
 
     set_status(WorkflowStatus.EXECUTING_SAFE_ACTIONS, "SafeActionExecutor")
-    amber: list = []
+    amber: list[ActionProposal] = []
     for proposal in proposals:
         tier = authorize_proposal(proposal)
         proposal.proposed_tier = tier
@@ -181,9 +185,7 @@ async def kick_amendment_resume(
     approved: bool,
 ) -> None:
     try:
-        await asyncio.to_thread(
-            _run_resume_pipeline, container, run_id, approval_id, approved
-        )
+        await asyncio.to_thread(_run_resume_pipeline, container, run_id, approval_id, approved)
     except Exception:  # noqa: BLE001
         logger.exception("background amendment.resume failed run_id=%s", run_id)
 
@@ -258,10 +260,7 @@ def _run_resume_pipeline(
     run = svc._require_run(run_id)
     final = (
         WorkflowStatus.COMPLETED_WITH_BLOCKS
-        if any(
-            a.status.value == "blocked"
-            for a in svc.state.list_actions(run_id)
-        )
+        if any(a.status.value == "blocked" for a in svc.state.list_actions(run_id))
         else WorkflowStatus.COMPLETED
     )
     svc.state.save_run(

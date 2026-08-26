@@ -13,6 +13,7 @@ from protocol215.adapters.fakes import FakeProtocolCompiler
 from protocol215.adapters.identifiers import DeterministicIdentifierGenerator
 from protocol215.adapters.object_store_local import LocalFileObjectStore
 from protocol215.adapters.state_store_memory import InMemoryStateStore
+from protocol215.application.amendment_analysis import AmendmentAnalysisPipeline
 from protocol215.application.hashing import hash_payload
 from protocol215.application.services import AmendmentAppService
 from protocol215.domain.enums import ActionStatus, ApprovalStatus, RiskTier, WorkflowStatus
@@ -21,13 +22,11 @@ from protocol215.domain.models import (
     EvidenceReference,
     WorkflowRun,
 )
+from protocol215.fixtures.aurora_ir import build_aurora_v1_ir, build_aurora_v2_ir
 from protocol215.policy.approval import build_approval_request, validate_approval_not_stale
 from protocol215.policy.matrix import authorize_proposal
 from protocol215.simulator.twin import load_participants, load_sites, rehearse_amendment
-from protocol215.fixtures.aurora_ir import build_aurora_v1_ir, build_aurora_v2_ir
-from protocol215.application.amendment_analysis import AmendmentAnalysisPipeline
-from protocol215.tools.executor import ToolExecutor
-from protocol215.tools.registry import ALLOWED_ACTION_NAMES, GREEN_TOOLS, AMBER_TOOLS
+from protocol215.tools.registry import ALLOWED_ACTION_NAMES
 from protocol215.workflow.driver import LocalWorkflowDriver
 from protocol215.workflow.errors import WorkflowFailure
 
@@ -52,9 +51,9 @@ def _svc(tmp_path):
 
 
 def _proposals_for_aurora(run: WorkflowRun):
-    changes = AmendmentAnalysisPipeline().analyze(
-        build_aurora_v1_ir(), build_aurora_v2_ir()
-    ).changes
+    changes = (
+        AmendmentAnalysisPipeline().analyze(build_aurora_v1_ir(), build_aurora_v2_ir()).changes
+    )
     sites = load_sites()
     participants = load_participants()
     findings = rehearse_amendment(changes=changes, sites=sites, participants=participants)
@@ -93,11 +92,7 @@ def test_each_green_tool_executes(tmp_path) -> None:
     svc = _svc(tmp_path)
     run = svc.create_run(study_id="AURORA-101", from_version="1.0", to_version="2.0")
     svc.state.save_sites(run.run_id, load_sites())
-    proposals = [
-        p
-        for p in _proposals_for_aurora(run)
-        if authorize_proposal(p) == RiskTier.GREEN
-    ]
+    proposals = [p for p in _proposals_for_aurora(run) if authorize_proposal(p) == RiskTier.GREEN]
     assert proposals
     for p in proposals:
         action = svc.execute_idempotent_action(
@@ -153,11 +148,7 @@ def test_tool_replay_path(tmp_path) -> None:
     svc = _svc(tmp_path)
     run = svc.create_run(study_id="AURORA-101", from_version="1.0", to_version="2.0")
     svc.state.save_sites(run.run_id, load_sites())
-    p = next(
-        x
-        for x in _proposals_for_aurora(run)
-        if x.tool_name == "update_contact_directory"
-    )
+    p = next(x for x in _proposals_for_aurora(run) if x.tool_name == "update_contact_directory")
     a1 = svc.execute_idempotent_action(
         run_id=run.run_id, proposal=p, protocol_version="2.0", target_id="lab"
     )
@@ -227,15 +218,11 @@ def test_stale_approval_conditions(tmp_path) -> None:
 
     # invocation mismatch
     with pytest.raises(WorkflowFailure):
-        validate_approval_not_stale(
-            request=req, run=run, current_invocation_id="other-inv"
-        )
+        validate_approval_not_stale(request=req, run=run, current_invocation_id="other-inv")
 
     # state version mismatch
     with pytest.raises(WorkflowFailure):
-        validate_approval_not_stale(
-            request=req, run=run, submitted_state_version=999
-        )
+        validate_approval_not_stale(request=req, run=run, submitted_state_version=999)
 
     # evidence changed
     with pytest.raises(WorkflowFailure):
@@ -259,7 +246,9 @@ def test_stale_approval_conditions(tmp_path) -> None:
         validate_approval_not_stale(request=req, run=done)
 
     # action state changed
-    changed = proposal.model_copy(update={"args": {**proposal.args, "transition_summary": "changed"}})
+    changed = proposal.model_copy(
+        update={"args": {**proposal.args, "transition_summary": "changed"}}
+    )
     with pytest.raises(WorkflowFailure):
         validate_approval_not_stale(request=req, run=run, current_proposal=changed)
 

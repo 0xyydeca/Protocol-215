@@ -82,7 +82,7 @@ class LocalWorkflowDriver:
             clock=self.clock,
             ids=self.ids,
         )
-        self.session_service = InMemorySessionService()
+        self.session_service = InMemorySessionService()  # type: ignore[no-untyped-call]
         self.app = build_app()
         self.runner = Runner(app=self.app, session_service=self.session_service)
         self._pause_by_run: dict[str, PauseState] = {}
@@ -244,8 +244,8 @@ class LocalWorkflowDriver:
                 findings=self.state.list_findings(run_id),
             )
             runtime.proposals = proposals
-            from protocol215.policy.matrix import authorize_proposal
             from protocol215.domain.enums import RiskTier
+            from protocol215.policy.matrix import authorize_proposal
 
             for p in proposals:
                 tier = authorize_proposal(p)
@@ -286,9 +286,6 @@ class LocalWorkflowDriver:
                         fc = part.function_call
                         if fc and fc.name == "adk_request_input":
                             interrupt_id = fc.id or (fc.args or {}).get("interruptId")
-                            approval_id = runtime.pending_approval_id or runtime.state.get_session_metadata(
-                                runtime.run_id
-                            )
                             apr_id = None
                             expected_sv = 0
                             meta = runtime.state.get_session_metadata(runtime.run_id)
@@ -320,9 +317,11 @@ class LocalWorkflowDriver:
                                     runtime.state.save_approval_request(
                                         req.model_copy(update={"invocation_id": final_inv})
                                     )
-                            ctx_state = (await self.session_service.get_session(
+                            session = await self.session_service.get_session(
                                 app_name=APP_NAME, user_id="operator", session_id=session_id
-                            )).state
+                            )
+                            assert session is not None
+                            ctx_state = session.state
                             ctx_state["invocation_id"] = final_inv
                 # Capture node outputs into event log if present
                 if event.output and isinstance(event.output, dict) and event.output.get("node"):
@@ -336,6 +335,7 @@ class LocalWorkflowDriver:
                     "failure_retryable": isinstance(exc, WorkflowFailure) and exc.retryable,
                 }
             )
+
             # Invoke FailureHandler node logic directly to preserve diagnostics.
             class _Ctx:
                 state = {
@@ -345,23 +345,13 @@ class LocalWorkflowDriver:
                     "failure_retryable": isinstance(exc, WorkflowFailure) and exc.retryable,
                 }
 
-            _failure_handler_impl(_Ctx())  # type: ignore[arg-type]
-            error = str(exc)
-            run = runtime.run()
-            result = WorkflowDriveResult(
-                run=run,
-                session_id=session_id,
-                invocation_id=final_inv,
-                paused=False,
-                pause=None,
-                events=list(runtime.event_log) or list(run.event_sequence),
-                adk_event_authors=adk_authors,
-                error=error,
-            )
+            _failure_handler_impl(_Ctx())
             # Do not swallow — surface after diagnostics preserved.
             raise WorkflowFailure(
                 str(exc),
-                failure_class=fclass if isinstance(exc, WorkflowFailure) else classify_exception(exc),
+                failure_class=fclass
+                if isinstance(exc, WorkflowFailure)
+                else classify_exception(exc),
                 retryable=isinstance(exc, WorkflowFailure) and exc.retryable,
                 details={"drive_result": "diagnostics_preserved"},
             ) from exc

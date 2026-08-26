@@ -41,10 +41,11 @@ def create_worker_app(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         settings = get_settings()
-        if request.app.state.require_oidc:
-            if not authorization or not authorization.startswith("Bearer "):
-                response.status_code = status.HTTP_401_UNAUTHORIZED
-                return {"error": "missing_oidc_token"}
+        if request.app.state.require_oidc and (
+            not authorization or not authorization.startswith("Bearer ")
+        ):
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"error": "missing_oidc_token"}
 
         active: AmendmentWorkerHandler | None = request.app.state.handler
         if active is None:

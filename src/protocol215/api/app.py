@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,7 @@ def create_app(settings: Settings | None = None, container: AppContainer | None 
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_exception_handler(ApiError, api_error_handler)
+    app.add_exception_handler(ApiError, api_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, unhandled_error_handler)
 
     @app.get("/healthz")

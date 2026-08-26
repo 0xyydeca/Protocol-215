@@ -47,7 +47,9 @@ class InMemoryStateStore:
         return run.model_copy(deep=True) if run else None
 
     def list_runs(self) -> list[WorkflowRun]:
-        return [r.model_copy(deep=True) for r in sorted(self.runs.values(), key=lambda x: x.created_at)]
+        return [
+            r.model_copy(deep=True) for r in sorted(self.runs.values(), key=lambda x: x.created_at)
+        ]
 
     def save_protocol_artifact(self, artifact: ProtocolArtifactRecord) -> None:
         self.artifacts.setdefault(artifact.run_id, []).append(artifact.model_copy(deep=True))
@@ -114,11 +116,7 @@ class InMemoryStateStore:
         return req.model_copy(deep=True) if req else None
 
     def list_approval_requests(self, run_id: str) -> list[ApprovalRequest]:
-        return [
-            r.model_copy(deep=True)
-            for r in self.approvals.values()
-            if r.run_id == run_id
-        ]
+        return [r.model_copy(deep=True) for r in self.approvals.values() if r.run_id == run_id]
 
     def save_approval_decision(self, decision: ApprovalDecision) -> None:
         self.approval_decisions[decision.approval_id] = decision.model_copy(deep=True)

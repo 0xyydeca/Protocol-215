@@ -10,7 +10,6 @@ from protocol215.domain.enums import ImpactLayer
 from protocol215.fixtures.aurora_ir import build_aurora_v1_ir, build_aurora_v2_ir
 from protocol215.simulator.twin import load_participants, load_sites
 
-
 GOLD_IDS = {
     "CHG-001-LAB-CONTACT",
     "CHG-002-PK-6H",

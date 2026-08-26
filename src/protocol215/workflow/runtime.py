@@ -115,9 +115,7 @@ def runtime_from_ctx(ctx: Any) -> WorkflowRuntime:
     return get_runtime(run_id)
 
 
-def proposal_idempotency_key(
-    run_id: str, proposal: ActionProposal, protocol_version: str
-) -> str:
+def proposal_idempotency_key(run_id: str, proposal: ActionProposal, protocol_version: str) -> str:
     target = proposal.site_id or proposal.participant_id or proposal.proposal_id
     return proposal.idempotency_key or build_idempotency_key(
         run_id=run_id,

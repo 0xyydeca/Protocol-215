@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from protocol215.application.hashing import build_idempotency_key, sha256_hex
-from protocol215.domain.enums import ActionStatus, ApprovalStatus, WorkflowStatus
+from protocol215.domain.enums import ApprovalStatus, WorkflowStatus
 from protocol215.domain.models import (
     ActionExecution,
     ActionProposal,

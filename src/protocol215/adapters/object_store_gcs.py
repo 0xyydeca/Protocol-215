@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from protocol215.application.hashing import sha256_hex
 from protocol215.cloud.paths import (
@@ -69,7 +69,7 @@ class GCSObjectStore:
         blob = self._bucket.blob(key)
         if not blob.exists():
             raise FileNotFoundError(key)
-        return blob.download_as_bytes()
+        return cast(bytes, blob.download_as_bytes())
 
     def exists(self, key: str) -> bool:
         return bool(self._bucket.blob(key).exists())
@@ -88,9 +88,7 @@ class GCSObjectStore:
         )
 
     def put_manifest_json(self, run_id: str, data: bytes) -> str:
-        return self.put_bytes(
-            manifest_json_key(run_id), data, content_type="application/json"
-        )
+        return self.put_bytes(manifest_json_key(run_id), data, content_type="application/json")
 
     def put_manifest_html(self, run_id: str, data: bytes) -> str:
         return self.put_bytes(
@@ -100,9 +98,5 @@ class GCSObjectStore:
     def put_demo_artifact(self, name: str, data: bytes, *, content_type: str) -> str:
         return self.put_bytes(demo_artifact_key(name), data, content_type=content_type)
 
-    def put_run_artifact(
-        self, run_id: str, name: str, data: bytes, *, content_type: str
-    ) -> str:
-        return self.put_bytes(
-            run_artifact_key(run_id, name), data, content_type=content_type
-        )
+    def put_run_artifact(self, run_id: str, name: str, data: bytes, *, content_type: str) -> str:
+        return self.put_bytes(run_artifact_key(run_id, name), data, content_type=content_type)

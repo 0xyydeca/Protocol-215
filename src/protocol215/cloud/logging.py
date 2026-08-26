@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from protocol215.observability import get_logger
 
@@ -32,7 +32,9 @@ def _sanitize(value: Any) -> Any:
         out: dict[str, Any] = {}
         for k, v in value.items():
             key = str(k).lower()
-            if key in _REDACT_KEYS or any(r in key for r in ("pdf", "secret", "credential", "password")):
+            if key in _REDACT_KEYS or any(
+                r in key for r in ("pdf", "secret", "credential", "password")
+            ):
                 out[str(k)] = "[REDACTED]"
             else:
                 out[str(k)] = _sanitize(v)

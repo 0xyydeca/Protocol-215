@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from protocol215.adapters.audit_log import HashChainedAuditLog
 from protocol215.adapters.clock import SystemClock
@@ -38,7 +39,7 @@ class AppContainer:
     # Content-hash → run_id for duplicate submission detection
     submission_index: dict[str, str] = field(default_factory=dict)
     # Last twin baseline after reset (for demo UI / reset response)
-    last_twin_snapshot: dict = field(default_factory=dict)
+    last_twin_snapshot: dict[str, Any] = field(default_factory=dict)
 
     def reset(self, *, confirmed: bool = False) -> DemoResetResult:
         """
@@ -93,9 +94,7 @@ class AppContainer:
             objects_cleared += deleted
 
         if isinstance(self.objects, LocalFileObjectStore):
-            objects_cleared += clear_local_object_runs(
-                Path(self.settings.local_object_store_path)
-            )
+            objects_cleared += clear_local_object_runs(Path(self.settings.local_object_store_path))
             Path(self.settings.local_object_store_path).mkdir(parents=True, exist_ok=True)
 
         self.submission_index.clear()
@@ -120,11 +119,9 @@ class AppContainer:
 
     def _rebind_service_state(self) -> None:
         self.service.state = self.state
-        self.service.audit = HashChainedAuditLog(
-            self.state, self.service.clock, self.service.ids
-        )
-        self.service.tools.state = self.state  # type: ignore[attr-defined]
-        self.service.tools.audit = self.service.audit  # type: ignore[attr-defined]
+        self.service.audit = HashChainedAuditLog(self.state, self.service.clock, self.service.ids)
+        self.service.tools.state = self.state
+        self.service.tools.audit = self.service.audit
 
 
 def build_container(settings: Settings) -> AppContainer:

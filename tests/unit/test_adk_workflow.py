@@ -106,7 +106,10 @@ def test_duplicate_resume_event() -> None:
         if a.authorized_tier == RiskTier.AMBER and a.executed
     ]
     assert amber_exec_1 == amber_exec_2
-    assert "HumanApproval:duplicate_resume" in second.events or first.run.status == WorkflowStatus.COMPLETED
+    assert (
+        "HumanApproval:duplicate_resume" in second.events
+        or first.run.status == WorkflowStatus.COMPLETED
+    )
 
 
 def test_crash_before_approval_restart_and_resume() -> None:
@@ -156,15 +159,9 @@ def test_failure_handler_preserves_diagnostics() -> None:
 
 
 def test_red_action_never_reaches_executor_success() -> None:
-    driver = LocalWorkflowDriver(
-        planner=FakeActionPlanner(include_amber=False, include_red=True)
-    )
+    driver = LocalWorkflowDriver(planner=FakeActionPlanner(include_amber=False, include_red=True))
     result = _run(driver.start())
-    reds = [
-        a
-        for a in driver.state.list_actions(result.run.run_id)
-        if a.tool_name == "change_dose"
-    ]
+    reds = [a for a in driver.state.list_actions(result.run.run_id) if a.tool_name == "change_dose"]
     assert reds
     assert all(a.authorized_tier == RiskTier.RED for a in reds)
     assert all(a.executed is False for a in reds)

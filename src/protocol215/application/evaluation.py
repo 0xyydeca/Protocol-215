@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from protocol215.application.impact import GOLD_ARTIFACT_ALIASES
 from protocol215.domain.models import SemanticChange
@@ -15,7 +15,7 @@ DEFAULT_GOLD = ROOT / "fixtures" / "gold" / "amendment_v1_to_v2_expected.json"
 
 def load_gold(path: Path | None = None) -> dict[str, Any]:
     gold_path = path or DEFAULT_GOLD
-    return json.loads(gold_path.read_text(encoding="utf-8"))
+    return cast(dict[str, Any], json.loads(gold_path.read_text(encoding="utf-8")))
 
 
 def _normalize_artifact(name: str) -> str:
@@ -59,9 +59,7 @@ def evaluate_changes(
             continue
         evidence_checked += 1
         pages = {
-            e.page
-            for e in [*p.old_evidence, *p.new_evidence, *p.evidence]
-            if e.page is not None
+            e.page for e in [*p.old_evidence, *p.new_evidence, *p.evidence] if e.page is not None
         }
         ok = expected_page in pages
         if ok:
@@ -117,9 +115,7 @@ def evaluate_changes(
             )
     for detail in artifact_details:
         if detail["misses"]:
-            mismatches.append(
-                f"artifact misses {detail['change_id']}: {detail['misses']}"
-            )
+            mismatches.append(f"artifact misses {detail['change_id']}: {detail['misses']}")
 
     report = {
         "study_id": gold.get("study_id"),
@@ -143,7 +139,7 @@ def evaluate_changes(
         "claims_perfect_score": False,
     }
     # Only set true when all metrics are perfect — never claim until proven.
-    m = report["metrics"]
+    m = cast(dict[str, Any], report["metrics"])
     report["claims_perfect_score"] = (
         m["exact_match_change_recall"] == 1.0
         and m["concept_level_precision"] == 1.0
