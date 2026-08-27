@@ -1,670 +1,66 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Protocol 215 API",
-    "description": "Clinical Amendment Preflight \u2014 synthetic proof of concept",
-    "version": "0.1.0"
-  },
-  "paths": {
-    "/healthz": {
-      "get": {
-        "summary": "Healthz",
-        "operationId": "healthz_healthz_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Healthz Healthz Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/readyz": {
-      "get": {
-        "summary": "Readyz",
-        "operationId": "readyz_readyz_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Readyz Readyz Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs": {
-      "post": {
-        "summary": "Create Run",
-        "operationId": "create_run_api_runs_post",
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Idempotency-Key"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_create_run_api_runs_post"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateRunResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "List Runs",
-        "operationId": "list_runs_api_runs_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RunListItem"
-                  },
-                  "title": "Response List Runs Api Runs Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}": {
-      "get": {
-        "summary": "Get Run",
-        "operationId": "get_run_api_runs__run_id__get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RunStatusResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/changes": {
-      "get": {
-        "summary": "Get Changes",
-        "operationId": "get_changes_api_runs__run_id__changes_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Changes Api Runs  Run Id  Changes Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/impact": {
-      "get": {
-        "summary": "Get Impact",
-        "operationId": "get_impact_api_runs__run_id__impact_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImpactGraphResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/findings": {
-      "get": {
-        "summary": "Get Findings",
-        "operationId": "get_findings_api_runs__run_id__findings_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Findings Api Runs  Run Id  Findings Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/actions": {
-      "get": {
-        "summary": "Get Actions",
-        "operationId": "get_actions_api_runs__run_id__actions_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Actions Api Runs  Run Id  Actions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/approvals": {
-      "get": {
-        "summary": "Get Approvals",
-        "operationId": "get_approvals_api_runs__run_id__approvals_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Approvals Api Runs  Run Id  Approvals Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/approvals/{approval_id}": {
-      "post": {
-        "summary": "Submit Approval",
-        "operationId": "submit_approval_api_runs__run_id__approvals__approval_id__post",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          },
-          {
-            "name": "approval_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Approval Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApprovalDecisionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApprovalDecisionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/audit": {
-      "get": {
-        "summary": "Get Audit",
-        "operationId": "get_audit_api_runs__run_id__audit_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Audit Api Runs  Run Id  Audit Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/audit/verify": {
-      "get": {
-        "summary": "Verify Audit",
-        "operationId": "verify_audit_api_runs__run_id__audit_verify_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Verify Audit Api Runs  Run Id  Audit Verify Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/runs/{run_id}/manifest": {
-      "get": {
-        "summary": "Get Manifest",
-        "operationId": "get_manifest_api_runs__run_id__manifest_get",
-        "parameters": [
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Manifest Api Runs  Run Id  Manifest Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/demo/reset": {
-      "post": {
-        "summary": "Demo Reset",
-        "description": "Clear synthetic demo runs/actions/approvals/manifests.\n\nCloud mode requires confirm=true (or CONFIRM_DEMO_RESET=yes via script).\nDoes not delete fixtures/ source PDFs or GCP infrastructure.",
-        "operationId": "demo_reset_api_demo_reset_post",
-        "parameters": [
-          {
-            "name": "confirm",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Confirm"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DemoResetResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
   "components": {
     "schemas": {
       "ApprovalDecisionRequest": {
         "properties": {
+          "actor": {
+            "default": "synthetic_operator",
+            "title": "Actor",
+            "type": "string"
+          },
+          "comment": {
+            "default": "",
+            "title": "Comment",
+            "type": "string"
+          },
           "decision": {
             "$ref": "#/components/schemas/ApprovalStatus"
           },
           "expected_state_version": {
-            "type": "integer",
-            "title": "Expected State Version"
-          },
-          "comment": {
-            "type": "string",
-            "title": "Comment",
-            "default": ""
-          },
-          "actor": {
-            "type": "string",
-            "title": "Actor",
-            "default": "synthetic_operator"
+            "title": "Expected State Version",
+            "type": "integer"
           }
         },
-        "type": "object",
         "required": [
           "decision",
           "expected_state_version"
         ],
-        "title": "ApprovalDecisionRequest"
+        "title": "ApprovalDecisionRequest",
+        "type": "object"
       },
       "ApprovalDecisionResponse": {
         "properties": {
           "approval_id": {
-            "type": "string",
-            "title": "Approval Id"
-          },
-          "run_id": {
-            "type": "string",
-            "title": "Run Id"
+            "title": "Approval Id",
+            "type": "string"
           },
           "decision": {
             "$ref": "#/components/schemas/ApprovalStatus"
           },
           "event_published": {
-            "type": "boolean",
-            "title": "Event Published"
+            "title": "Event Published",
+            "type": "boolean"
           },
           "message": {
-            "type": "string",
+            "default": "Approval recorded; resume event published.",
             "title": "Message",
-            "default": "Approval recorded; resume event published."
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "approval_id",
           "run_id",
           "decision",
           "event_published"
         ],
-        "title": "ApprovalDecisionResponse"
+        "title": "ApprovalDecisionResponse",
+        "type": "object"
       },
       "ApprovalStatus": {
-        "type": "string",
         "enum": [
           "pending",
           "approved",
@@ -672,21 +68,33 @@
           "expired",
           "consumed"
         ],
-        "title": "ApprovalStatus"
+        "title": "ApprovalStatus",
+        "type": "string"
       },
       "Body_create_run_api_runs_post": {
         "properties": {
-          "old_protocol": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "Old Protocol",
-            "description": "Prior protocol PDF"
+          "from_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Version"
           },
           "new_protocol": {
-            "type": "string",
             "contentMediaType": "application/octet-stream",
+            "description": "Amended protocol PDF",
             "title": "New Protocol",
-            "description": "Amended protocol PDF"
+            "type": "string"
+          },
+          "old_protocol": {
+            "contentMediaType": "application/octet-stream",
+            "description": "Prior protocol PDF",
+            "title": "Old Protocol",
+            "type": "string"
           },
           "study_id": {
             "anyOf": [
@@ -698,17 +106,6 @@
               }
             ],
             "title": "Study Id"
-          },
-          "from_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From Version"
           },
           "to_version": {
             "anyOf": [
@@ -722,61 +119,60 @@
             "title": "To Version"
           }
         },
-        "type": "object",
         "required": [
           "old_protocol",
           "new_protocol"
         ],
-        "title": "Body_create_run_api_runs_post"
+        "title": "Body_create_run_api_runs_post",
+        "type": "object"
       },
       "CreateRunResponse": {
         "properties": {
+          "event_published": {
+            "title": "Event Published",
+            "type": "boolean"
+          },
+          "from_version": {
+            "title": "From Version",
+            "type": "string"
+          },
+          "message": {
+            "default": "Run accepted; workflow started asynchronously.",
+            "title": "Message",
+            "type": "string"
+          },
+          "new_pages": {
+            "title": "New Pages",
+            "type": "integer"
+          },
+          "new_sha256": {
+            "title": "New Sha256",
+            "type": "string"
+          },
+          "old_pages": {
+            "title": "Old Pages",
+            "type": "integer"
+          },
+          "old_sha256": {
+            "title": "Old Sha256",
+            "type": "string"
+          },
           "run_id": {
-            "type": "string",
-            "title": "Run Id"
+            "title": "Run Id",
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/WorkflowStatus"
           },
           "study_id": {
-            "type": "string",
-            "title": "Study Id"
-          },
-          "from_version": {
-            "type": "string",
-            "title": "From Version"
+            "title": "Study Id",
+            "type": "string"
           },
           "to_version": {
-            "type": "string",
-            "title": "To Version"
-          },
-          "old_sha256": {
-            "type": "string",
-            "title": "Old Sha256"
-          },
-          "new_sha256": {
-            "type": "string",
-            "title": "New Sha256"
-          },
-          "old_pages": {
-            "type": "integer",
-            "title": "Old Pages"
-          },
-          "new_pages": {
-            "type": "integer",
-            "title": "New Pages"
-          },
-          "event_published": {
-            "type": "boolean",
-            "title": "Event Published"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "Run accepted; workflow started asynchronously."
+            "title": "To Version",
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "run_id",
           "status",
@@ -789,57 +185,58 @@
           "new_pages",
           "event_published"
         ],
-        "title": "CreateRunResponse"
+        "title": "CreateRunResponse",
+        "type": "object"
       },
       "DemoResetResponse": {
         "properties": {
-          "ok": {
-            "type": "boolean",
-            "title": "Ok"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
-          "sites_restored": {
-            "type": "integer",
-            "title": "Sites Restored",
-            "default": 0
-          },
-          "participants_restored": {
-            "type": "integer",
-            "title": "Participants Restored",
-            "default": 0
-          },
-          "runs_cleared": {
-            "type": "integer",
-            "title": "Runs Cleared",
-            "default": 0
-          },
-          "objects_cleared": {
-            "type": "integer",
-            "title": "Objects Cleared",
-            "default": 0
-          },
           "fixtures_preserved": {
             "items": {
               "type": "string"
             },
-            "type": "array",
-            "title": "Fixtures Preserved"
+            "title": "Fixtures Preserved",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "objects_cleared": {
+            "default": 0,
+            "title": "Objects Cleared",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "participants_restored": {
+            "default": 0,
+            "title": "Participants Restored",
+            "type": "integer"
+          },
+          "runs_cleared": {
+            "default": 0,
+            "title": "Runs Cleared",
+            "type": "integer"
+          },
+          "sites_restored": {
+            "default": 0,
+            "title": "Sites Restored",
+            "type": "integer"
           },
           "twin_snapshot": {
             "additionalProperties": true,
-            "type": "object",
-            "title": "Twin Snapshot"
+            "title": "Twin Snapshot",
+            "type": "object"
           }
         },
-        "type": "object",
         "required": [
           "ok",
           "message"
         ],
-        "title": "DemoResetResponse"
+        "title": "DemoResetResponse",
+        "type": "object"
       },
       "HTTPValidationError": {
         "properties": {
@@ -847,51 +244,47 @@
             "items": {
               "$ref": "#/components/schemas/ValidationError"
             },
-            "type": "array",
-            "title": "Detail"
+            "title": "Detail",
+            "type": "array"
           }
         },
-        "type": "object",
-        "title": "HTTPValidationError"
+        "title": "HTTPValidationError",
+        "type": "object"
       },
       "ImpactGraphResponse": {
         "properties": {
-          "nodes": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Nodes"
+          "edge_count": {
+            "default": 0,
+            "title": "Edge Count",
+            "type": "integer"
           },
           "edges": {
             "items": {
               "additionalProperties": true,
               "type": "object"
             },
-            "type": "array",
-            "title": "Edges"
+            "title": "Edges",
+            "type": "array"
           },
           "node_count": {
-            "type": "integer",
+            "default": 0,
             "title": "Node Count",
-            "default": 0
+            "type": "integer"
           },
-          "edge_count": {
-            "type": "integer",
-            "title": "Edge Count",
-            "default": 0
+          "nodes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Nodes",
+            "type": "array"
           }
         },
-        "type": "object",
-        "title": "ImpactGraphResponse"
+        "title": "ImpactGraphResponse",
+        "type": "object"
       },
       "PendingApprovalSummary": {
         "properties": {
-          "approval_id": {
-            "type": "string",
-            "title": "Approval Id"
-          },
           "action_id": {
             "anyOf": [
               {
@@ -902,28 +295,6 @@
               }
             ],
             "title": "Action Id"
-          },
-          "tool_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tool Name"
-          },
-          "affected_site_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Affected Site Id"
           },
           "affected_participant_id": {
             "anyOf": [
@@ -936,15 +307,25 @@
             ],
             "title": "Affected Participant Id"
           },
-          "expected_state_version": {
-            "type": "integer",
-            "title": "Expected State Version",
-            "default": 0
+          "affected_site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Site Id"
           },
-          "reason_approval_required": {
-            "type": "string",
-            "title": "Reason Approval Required",
-            "default": ""
+          "approval_id": {
+            "title": "Approval Id",
+            "type": "string"
+          },
+          "expected_state_version": {
+            "default": 0,
+            "title": "Expected State Version",
+            "type": "integer"
           },
           "interrupt_id": {
             "anyOf": [
@@ -967,46 +348,120 @@
               }
             ],
             "title": "Invocation Id"
+          },
+          "reason_approval_required": {
+            "default": "",
+            "title": "Reason Approval Required",
+            "type": "string"
+          },
+          "tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Name"
           }
         },
-        "type": "object",
         "required": [
           "approval_id"
         ],
-        "title": "PendingApprovalSummary"
+        "title": "PendingApprovalSummary",
+        "type": "object"
+      },
+      "RecordingReadinessCheck": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "RecordingReadinessCheck",
+        "type": "object"
+      },
+      "RecordingReadinessResponse": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingReadinessCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "failed_count": {
+            "default": 0,
+            "title": "Failed Count",
+            "type": "integer"
+          },
+          "observed": {
+            "additionalProperties": true,
+            "title": "Observed",
+            "type": "object"
+          },
+          "overall": {
+            "title": "Overall",
+            "type": "string"
+          },
+          "passed_count": {
+            "default": 0,
+            "title": "Passed Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "overall",
+          "checks"
+        ],
+        "title": "RecordingReadinessResponse",
+        "type": "object"
       },
       "RunListItem": {
         "properties": {
-          "run_id": {
-            "type": "string",
-            "title": "Run Id"
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           },
-          "study_id": {
-            "type": "string",
-            "title": "Study Id"
+          "current_stage": {
+            "title": "Current Stage",
+            "type": "string"
+          },
+          "from_version": {
+            "title": "From Version",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/WorkflowStatus"
           },
-          "from_version": {
-            "type": "string",
-            "title": "From Version"
+          "study_id": {
+            "title": "Study Id",
+            "type": "string"
           },
           "to_version": {
-            "type": "string",
-            "title": "To Version"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "current_stage": {
-            "type": "string",
-            "title": "Current Stage"
+            "title": "To Version",
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "run_id",
           "study_id",
@@ -1016,38 +471,66 @@
           "created_at",
           "current_stage"
         ],
-        "title": "RunListItem"
+        "title": "RunListItem",
+        "type": "object"
       },
       "RunStatusResponse": {
         "properties": {
-          "run_id": {
-            "type": "string",
-            "title": "Run Id"
+          "blocked_action_count": {
+            "default": 0,
+            "title": "Blocked Action Count",
+            "type": "integer"
           },
-          "study_id": {
-            "type": "string",
-            "title": "Study Id"
+          "checkpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkpoint"
           },
-          "from_version": {
-            "type": "string",
-            "title": "From Version"
+          "completed_action_count": {
+            "default": 0,
+            "title": "Completed Action Count",
+            "type": "integer"
           },
-          "to_version": {
-            "type": "string",
-            "title": "To Version"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WorkflowStatus"
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           },
           "current_stage": {
-            "type": "string",
-            "title": "Current Stage"
+            "title": "Current Stage",
+            "type": "string"
           },
-          "progress": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Progress"
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "event_sequence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Event Sequence",
+            "type": "array"
+          },
+          "execution_mode": {
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "from_version": {
+            "title": "From Version",
+            "type": "string"
           },
           "last_event": {
             "anyOf": [
@@ -1070,61 +553,33 @@
               }
             ]
           },
-          "completed_action_count": {
-            "type": "integer",
-            "title": "Completed Action Count",
-            "default": 0
+          "progress": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "type": "number"
           },
-          "blocked_action_count": {
-            "type": "integer",
-            "title": "Blocked Action Count",
-            "default": 0
-          },
-          "error_summary": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Summary"
-          },
-          "execution_mode": {
-            "type": "string",
-            "title": "Execution Mode"
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
           },
           "state_version": {
-            "type": "integer",
+            "default": 0,
             "title": "State Version",
-            "default": 0
+            "type": "integer"
           },
-          "checkpoint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Checkpoint"
+          "status": {
+            "$ref": "#/components/schemas/WorkflowStatus"
           },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
+          "study_id": {
+            "title": "Study Id",
+            "type": "string"
           },
-          "event_sequence": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Event Sequence"
+          "to_version": {
+            "title": "To Version",
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "run_id",
           "study_id",
@@ -1136,10 +591,18 @@
           "execution_mode",
           "created_at"
         ],
-        "title": "RunStatusResponse"
+        "title": "RunStatusResponse",
+        "type": "object"
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -1151,35 +614,27 @@
                 }
               ]
             },
-            "type": "array",
-            "title": "Location"
+            "title": "Location",
+            "type": "array"
           },
           "msg": {
-            "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "type": "string"
           },
           "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
+            "title": "Error Type",
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "loc",
           "msg",
           "type"
         ],
-        "title": "ValidationError"
+        "title": "ValidationError",
+        "type": "object"
       },
       "WorkflowStatus": {
-        "type": "string",
         "enum": [
           "CREATED",
           "ARTIFACTS_REGISTERED",
@@ -1207,7 +662,630 @@
           "PARTIAL",
           "FAILED"
         ],
-        "title": "WorkflowStatus"
+        "title": "WorkflowStatus",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "description": "Clinical Amendment Preflight \u2014 synthetic proof of concept",
+    "title": "Protocol 215 API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/demo/recording-readiness": {
+      "get": {
+        "description": "Judge-facing recording preflight. Real bounded checks; never mutates state.\nDoes not return secrets.",
+        "operationId": "recording_readiness_api_demo_recording_readiness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Recording Readiness"
+      }
+    },
+    "/api/demo/reset": {
+      "post": {
+        "description": "Clear synthetic demo runs/actions/approvals/manifests.\n\nCloud mode requires confirm=true (or CONFIRM_DEMO_RESET=yes via script).\nDoes not delete fixtures/ source PDFs or GCP infrastructure.",
+        "operationId": "demo_reset_api_demo_reset_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "confirm",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Confirm",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoResetResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Reset"
+      }
+    },
+    "/api/runs": {
+      "get": {
+        "operationId": "list_runs_api_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RunListItem"
+                  },
+                  "title": "Response List Runs Api Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Runs"
+      },
+      "post": {
+        "operationId": "create_run_api_runs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_run_api_runs_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Run"
+      }
+    },
+    "/api/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run"
+      }
+    },
+    "/api/runs/{run_id}/actions": {
+      "get": {
+        "operationId": "get_actions_api_runs__run_id__actions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Get Actions Api Runs  Run Id  Actions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Actions"
+      }
+    },
+    "/api/runs/{run_id}/approvals": {
+      "get": {
+        "operationId": "get_approvals_api_runs__run_id__approvals_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Get Approvals Api Runs  Run Id  Approvals Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Approvals"
+      }
+    },
+    "/api/runs/{run_id}/approvals/{approval_id}": {
+      "post": {
+        "operationId": "submit_approval_api_runs__run_id__approvals__approval_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "approval_id",
+            "required": true,
+            "schema": {
+              "title": "Approval Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalDecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Approval"
+      }
+    },
+    "/api/runs/{run_id}/audit": {
+      "get": {
+        "operationId": "get_audit_api_runs__run_id__audit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Get Audit Api Runs  Run Id  Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Audit"
+      }
+    },
+    "/api/runs/{run_id}/audit/verify": {
+      "get": {
+        "operationId": "verify_audit_api_runs__run_id__audit_verify_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Verify Audit Api Runs  Run Id  Audit Verify Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Audit"
+      }
+    },
+    "/api/runs/{run_id}/changes": {
+      "get": {
+        "operationId": "get_changes_api_runs__run_id__changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Get Changes Api Runs  Run Id  Changes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Changes"
+      }
+    },
+    "/api/runs/{run_id}/findings": {
+      "get": {
+        "operationId": "get_findings_api_runs__run_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Get Findings Api Runs  Run Id  Findings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Findings"
+      }
+    },
+    "/api/runs/{run_id}/impact": {
+      "get": {
+        "operationId": "get_impact_api_runs__run_id__impact_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactGraphResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Impact"
+      }
+    },
+    "/api/runs/{run_id}/manifest": {
+      "get": {
+        "operationId": "get_manifest_api_runs__run_id__manifest_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Manifest Api Runs  Run Id  Manifest Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Manifest"
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Readyz Readyz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readyz"
       }
     }
   }

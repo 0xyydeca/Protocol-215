@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api/client";
 import type { CreateRunResponse, LaunchMeta, RunListItem } from "../api/types";
-import { shortHash } from "../lib/workflow";
+import { ScenarioPreview, SignatureTitle } from "../components/RecordingChrome";
 import { ErrorState, LoadingState } from "../components/States";
+import { shortHash } from "../lib/workflow";
 
 type Props = {
   recent: RunListItem[] | null;
@@ -10,6 +11,7 @@ type Props = {
   onReloadRecent: () => void;
   onStarted: (meta: LaunchMeta, created: CreateRunResponse) => void;
   onReset?: () => void;
+  recordingMode?: boolean;
 };
 
 const SCENARIOS = [
@@ -28,6 +30,7 @@ export function LaunchView({
   onReloadRecent,
   onStarted,
   onReset,
+  recordingMode = false,
 }: Props) {
   const [scenarioId, setScenarioId] = useState(SCENARIOS[0].id);
   const [oldFile, setOldFile] = useState<File | null>(null);
@@ -40,9 +43,9 @@ export function LaunchView({
   const [introPhase, setIntroPhase] = useState<"problem" | "brand">("problem");
 
   useEffect(() => {
-    const t = window.setTimeout(() => setIntroPhase("brand"), 2200);
+    const t = window.setTimeout(() => setIntroPhase("brand"), recordingMode ? 2800 : 2200);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [recordingMode]);
 
   const scenario = useMemo(
     () => SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0],
@@ -112,22 +115,32 @@ export function LaunchView({
   }
 
   return (
-    <section className="view launch-view" aria-labelledby="launch-title">
-      <div className="signature-opening" data-phase={introPhase} aria-live="polite">
-        <p className="signature-problem">
-          Clinical-trial sites can operate under different protocol versions for an average of{" "}
-          <span className="days-215">215</span> days.
-        </p>
-        <div className="signature-brand">
-          <p className="brand signature-brand-name">Protocol 215</p>
-          <h2 id="launch-title" className="signature-tagline">
-            Clinical Amendment Preflight
-          </h2>
+    <section
+      className="view launch-view"
+      aria-labelledby="launch-title"
+      data-recording={recordingMode ? "true" : "false"}
+    >
+      {recordingMode ? (
+        <SignatureTitle phase={introPhase} />
+      ) : (
+        <div className="signature-opening" data-phase={introPhase} aria-live="polite">
+          <p className="signature-problem">
+            Clinical-trial sites can operate under different protocol versions for an average of{" "}
+            <span className="days-215">215</span> days.
+          </p>
+          <div className="signature-brand">
+            <p className="brand signature-brand-name">Protocol 215</p>
+            <h2 id="launch-title" className="signature-tagline">
+              Clinical Amendment Preflight
+            </h2>
+          </div>
         </div>
-      </div>
+      )}
+
+      {recordingMode && <ScenarioPreview />}
 
       <header className="view-header launch-subheader">
-        <p>
+        <p id={recordingMode ? "launch-title" : undefined}>
           Register synthetic AURORA-101 protocol PDFs and start an asynchronous preflight run. The
           workflow executes on the backend — this screen does not hardcode outcomes.
         </p>
@@ -218,7 +231,9 @@ export function LaunchView({
         </div>
         {recentError && <ErrorState error={recentError} onRetry={onReloadRecent} />}
         {!recent && !recentError && <LoadingState label="Loading recent runs…" />}
-        {recent && recent.length === 0 && <p className="empty">No runs yet — ready for a clean demo.</p>}
+        {recent && recent.length === 0 && (
+          <p className="empty">No runs yet — ready for a clean demo.</p>
+        )}
         {recent && recent.length > 0 && (
           <table className="data-table">
             <thead>

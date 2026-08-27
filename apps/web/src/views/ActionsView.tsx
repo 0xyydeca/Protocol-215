@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api, ApiError } from "../api/client";
 import type { ActionExecution, ApprovalRequest, RunStatus } from "../api/types";
-import { formatJson } from "../lib/workflow";
 import { ErrorState, LoadingState } from "../components/States";
+import { formatJson } from "../lib/workflow";
 
 type Props = {
   runId: string | null;
@@ -13,7 +13,15 @@ type Props = {
   error: Error | null;
   onRetry: () => void;
   onDecision: () => void;
+  recordingMode?: boolean;
 };
+
+function evidenceLines(
+  list?: { page: number; section_id: string; quote?: string | null }[] | null,
+): string {
+  if (!list?.length) return "—";
+  return list.map((e) => `page ${e.page} / ${e.section_id}`).join("; ");
+}
 
 export function ActionsView({
   runId,
@@ -24,15 +32,20 @@ export function ActionsView({
   error,
   onRetry,
   onDecision,
+  recordingMode = false,
 }: Props) {
   const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [decisionError, setDecisionError] = useState<Error | null>(null);
+  const clickGuard = useRef(false);
 
   if (loading && !actions) return <LoadingState label="Loading action ledger…" />;
   if (error && !actions) return <ErrorState error={error} onRetry={onRetry} />;
 
   const completed = (actions ?? []).filter((a) => a.status === "executed" || a.executed);
-  const blocked = (actions ?? []).filter((a) => a.status === "blocked" || a.authorized_tier === "RED");
+  const blocked = (actions ?? []).filter(
+    (a) => a.status === "blocked" || a.authorized_tier === "RED",
+  );
   const pendingApproval =
     (approvals ?? []).find((a) => a.status === "pending") ??
     (status?.pending_approval
@@ -54,12 +67,19 @@ export function ActionsView({
           proposed_after_state: {},
           change_evidence: [],
           operational_evidence: [],
+          session_id: null,
+          invocation_id: status.pending_approval.invocation_id,
         } as ApprovalRequest)
       : null);
 
+  const approveDisabled = busy || submitted || clickGuard.current;
+
   async function decide(decision: "approved" | "rejected") {
     if (!runId || !pendingApproval) return;
+    if (clickGuard.current || busy || submitted) return;
+    clickGuard.current = true;
     setBusy(true);
+    setSubmitted(true);
     setDecisionError(null);
     try {
       await api.submitApproval(runId, pendingApproval.approval_id, {
@@ -69,13 +89,18 @@ export function ActionsView({
       onDecision();
     } catch (err) {
       setDecisionError(err instanceof Error ? err : new Error(String(err)));
+      // Keep button disabled after first click — do not allow double-submit.
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className="view actions-view" aria-labelledby="actions-title">
+    <section
+      className="view actions-view"
+      aria-labelledby="actions-title"
+      data-recording={recordingMode ? "true" : "false"}
+    >
       <header className="view-header">
         <h2 id="actions-title">Action Ledger & Approval</h2>
         <p>GREEN completes automatically. AMBER waits. RED never executes.</p>
@@ -92,6 +117,17 @@ export function ActionsView({
                   {a.authorized_tier}
                   {a.site_id ? ` · ${a.site_id}` : ""}
                   {a.participant_id ? ` · ${a.participant_id}` : ""}
+                </span>
+                <span className="ledger-meta">
+                  ID: <code>{a.execution_id}</code>
+                  {a.executed_at ? (
+                    <>
+                      {" "}
+                      · {a.executed_at}
+                    </>
+                  ) : (
+                    " · timestamp pending"
+                  )}
                 </span>
               </li>
             ))}
@@ -110,68 +146,81 @@ export function ActionsView({
               <p>{pendingApproval.reason_approval_required}</p>
               <dl className="kv dense">
                 <div>
-                  <dt>Site</dt>
-                  <dd>{pendingApproval.affected_site_id ?? "—"}</dd>
+                  <dt>Protocol evidence</dt>
+                  <dd>{evidenceLines(pendingApproval.change_evidence)}</dd>
                 </div>
                 <div>
-                  <dt>Participant</dt>
-                  <dd>{pendingApproval.affected_participant_id ?? "—"}</dd>
+                  <dt>Operational evidence</dt>
+                  <dd>{evidenceLines(pendingApproval.operational_evidence)}</dd>
                 </div>
                 <div>
-                  <dt>Source evidence</dt>
-                  <dd>
-                    {(pendingApproval.change_evidence ?? [])
-                      .concat(pendingApproval.operational_evidence ?? [])
-                      .map((e) => `p.${e.page} ${e.section_id}`)
-                      .join("; ") || "Linked from change evidence"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Before</dt>
+                  <dt>Before state</dt>
                   <dd>
                     <pre>{formatJson(pendingApproval.before_state)}</pre>
                   </dd>
                 </div>
                 <div>
-                  <dt>Proposed after</dt>
+                  <dt>Proposed after state</dt>
                   <dd>
                     <pre>{formatJson(pendingApproval.proposed_after_state)}</pre>
                   </dd>
                 </div>
                 <div>
-                  <dt>If approved</dt>
-                  <dd>{pendingApproval.consequences_of_approval}</dd>
+                  <dt>Consequences of approval</dt>
+                  <dd>{pendingApproval.consequences_of_approval ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt>If rejected</dt>
-                  <dd>{pendingApproval.consequences_of_rejection}</dd>
+                  <dt>Consequences of rejection</dt>
+                  <dd>{pendingApproval.consequences_of_rejection ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>Run ID</dt>
+                  <dd>
+                    <code>{pendingApproval.run_id || runId || "—"}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Session ID</dt>
+                  <dd>
+                    <code>{pendingApproval.session_id ?? "—"}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Invocation ID</dt>
+                  <dd>
+                    <code>{pendingApproval.invocation_id ?? "—"}</code>
+                  </dd>
                 </div>
               </dl>
               <div className="approval-actions">
                 <button
                   type="button"
                   className="btn primary"
-                  disabled={busy}
+                  disabled={approveDisabled}
+                  aria-disabled={approveDisabled}
                   onClick={() => void decide("approved")}
                 >
-                  Approve
+                  {submitted ? "Decision submitted" : "Approve"}
                 </button>
                 <button
                   type="button"
                   className="btn danger"
-                  disabled={busy}
+                  disabled={approveDisabled}
+                  aria-disabled={approveDisabled}
                   onClick={() => void decide("rejected")}
                 >
                   Reject
                 </button>
               </div>
-              {busy && <LoadingState label="Recording decision and publishing amendment.resume…" />}
+              {busy && (
+                <LoadingState label="Recording decision and publishing amendment.resume…" />
+              )}
               {decisionError && (
                 <ErrorState
                   error={decisionError}
                   onRetry={
                     decisionError instanceof ApiError && decisionError.retryable
-                      ? () => void decide("approved")
+                      ? undefined
                       : undefined
                   }
                 />
@@ -188,6 +237,9 @@ export function ActionsView({
                 <strong>{a.tool_name}</strong>
                 <span>
                   {a.authorized_tier} · {a.status}
+                </span>
+                <span className="ledger-meta">
+                  ID: <code>{a.execution_id}</code>
                 </span>
               </li>
             ))}

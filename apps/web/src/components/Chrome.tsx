@@ -1,10 +1,13 @@
-import type { ReadyzResponse, RunStatus } from "../api/types";
+import type { RunStatus } from "../api/types";
 import { STAGES, stageFromStatus } from "../lib/workflow";
 
 type Props = {
   status?: RunStatus | null;
 };
 
+/**
+ * Stage indicator advances only from persisted backend workflow status — never timers.
+ */
 export function StageIndicator({ status }: Props) {
   const current = stageFromStatus(status?.status);
   const idx = STAGES.indexOf(current);
@@ -34,48 +37,10 @@ export function StageIndicator({ status }: Props) {
         <p className="stage-meta" aria-live="polite">
           {status.current_stage} · {Math.round(status.progress * 100)}%
           {status.last_event ? ` · ${status.last_event}` : ""}
+          {status.status ? ` · ${status.status}` : ""}
         </p>
       )}
     </nav>
-  );
-}
-
-type ModeProps = {
-  ready?: ReadyzResponse | null;
-  executionMode?: string;
-};
-
-export function ModeBar({ ready, executionMode }: ModeProps) {
-  const env = ready?.app_env ?? "local";
-  const gemini = ready?.backends?.gemini ?? ready?.compiler_mode ?? "fake";
-  const isFake = gemini === "fake" || ready?.compiler_mode === "fake";
-  const cloud =
-    executionMode === "cloud" ||
-    ready?.execution_mode === "cloud" ||
-    env === "cloud";
-  const modelId = ready?.gemini_model ?? ready?.backends?.gemini_model ?? "gemini-3.5-flash";
-  const revision = ready?.cloud_run_revision ?? ready?.demo_mode?.cloud_run_revision;
-
-  return (
-    <div className="mode-bar" role="status" aria-label="Demo mode indicators">
-      <span className="mode-pill" data-tone="synthetic">
-        Synthetic Study
-      </span>
-      <span className="mode-pill" data-tone={cloud ? "cloud" : "local"}>
-        {cloud ? "Google Cloud" : "Local"}
-      </span>
-      <span className="mode-pill" data-tone={isFake ? "fake" : "live"}>
-        {isFake ? "Fake Compiler" : "Live Gemini"}
-      </span>
-      <span className="mode-pill muted" title="Configured model ID">
-        Model: {modelId}
-      </span>
-      {cloud && revision && (
-        <span className="mode-pill muted" title="Cloud Run revision">
-          Revision: {revision}
-        </span>
-      )}
-    </div>
   );
 }
 
@@ -84,6 +49,49 @@ export function SyntheticBanner() {
     <aside className="synthetic-banner" role="note">
       <strong>Synthetic data only.</strong> AURORA-101 proof of concept — not validated for real
       clinical use. No PHI, patients, or production trial systems.
+    </aside>
+  );
+}
+
+/** Visible resume identity strip — values only from backend. */
+export function ResumeProofBanner({
+  runId,
+  status,
+  sessionId,
+  invocationId,
+}: {
+  runId: string | null;
+  status: string | null;
+  sessionId?: string | null;
+  invocationId?: string | null;
+}) {
+  if (!status) return null;
+  const highlight =
+    status === "AWAITING_APPROVAL" ||
+    status === "RESUMING" ||
+    status === "VERIFYING" ||
+    status === "EXECUTING_APPROVED_AMBER";
+  if (!highlight && status !== "COMPLETED" && status !== "COMPLETED_WITH_BLOCKS") {
+    return null;
+  }
+  return (
+    <aside className="resume-proof" aria-live="polite" data-status={status}>
+      <strong>Resume proof</strong>
+      <span className="resume-flow" aria-label="Status transitions">
+        AWAITING_APPROVAL → RESUMING → VERIFYING
+      </span>
+      <span>
+        Now: <code>{status}</code>
+      </span>
+      <span>
+        Run: <code>{runId ?? "—"}</code>
+      </span>
+      <span>
+        Session: <code>{sessionId ?? "—"}</code>
+      </span>
+      <span>
+        Invocation: <code>{invocationId ?? "—"}</code>
+      </span>
     </aside>
   );
 }

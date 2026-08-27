@@ -13,10 +13,12 @@ import type {
   SemanticChange,
   ViewId,
 } from "./api/types";
-import { ModeBar, StageIndicator, SyntheticBanner } from "./components/Chrome";
+import { ResumeProofBanner, StageIndicator, SyntheticBanner } from "./components/Chrome";
+import { ModeBar } from "./components/ModeBar";
 import { ErrorState } from "./components/States";
 import { ViewNav } from "./components/ViewNav";
 import { usePoll } from "./hooks/usePoll";
+import { isRecordingMode } from "./lib/recordingMode";
 import { isRetryableFailure, isTerminal } from "./lib/workflow";
 import { ActionsView } from "./views/ActionsView";
 import { FindingsView } from "./views/FindingsView";
@@ -37,11 +39,11 @@ function unlockedViews(_status: RunStatus | null, hasRun: boolean): Set<ViewId> 
     "manifest",
   ];
   if (!hasRun) return new Set<ViewId>(["launch"]);
-  // Once a run exists, all judge views are navigable; empty/loading states show stage wait.
   return new Set(all);
 }
 
 export default function App() {
+  const [recordingMode] = useState(() => isRecordingMode());
   const [view, setView] = useState<ViewId>("launch");
   const [meta, setMeta] = useState<LaunchMeta | null>(null);
   const runId = meta?.run_id ?? null;
@@ -85,18 +87,21 @@ export default function App() {
     deps: [runId, statusPoll.data?.status],
   });
 
-  const manifestPoll = usePoll(async () => {
-    try {
-      return await api.getManifest(runId!);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 404) return null;
-      throw err;
-    }
-  }, {
-    enabled: Boolean(runId),
-    intervalMs: 2000,
-    deps: [runId, statusPoll.data?.status],
-  });
+  const manifestPoll = usePoll(
+    async () => {
+      try {
+        return await api.getManifest(runId!);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }
+    },
+    {
+      enabled: Boolean(runId),
+      intervalMs: 2000,
+      deps: [runId, statusPoll.data?.status],
+    },
+  );
 
   const [audit, setAudit] = useState<AuditVerify | null>(null);
   useEffect(() => {
@@ -107,7 +112,13 @@ export default function App() {
         if (!cancelled) setAudit(v);
       },
       () => {
-        if (!cancelled) setAudit({ ok: false, events_checked: 0, errors: ["verify failed"], message: "verify failed" });
+        if (!cancelled)
+          setAudit({
+            ok: false,
+            events_checked: 0,
+            errors: ["verify failed"],
+            message: "verify failed",
+          });
       },
     );
     return () => {
@@ -115,7 +126,6 @@ export default function App() {
     };
   }, [runId, manifestPoll.data]);
 
-  // Hint once when approval becomes available (do not fight manual navigation).
   const [approvalHinted, setApprovalHinted] = useState(false);
   useEffect(() => {
     if (
@@ -128,6 +138,15 @@ export default function App() {
       setApprovalHinted(true);
     }
   }, [statusPoll.data?.status, view, approvalHinted]);
+
+  // Recording mode: auto-open Manifest when Verify completes — driven by backend status only.
+  useEffect(() => {
+    if (!recordingMode) return;
+    const s = statusPoll.data?.status;
+    if (s === "COMPLETED" || s === "COMPLETED_WITH_BLOCKS" || s === "MANIFEST_READY") {
+      if (view !== "manifest" && view !== "launch") setView("manifest");
+    }
+  }, [recordingMode, statusPoll.data?.status, view]);
 
   const unlocked = useMemo(
     () => unlockedViews(statusPoll.data, Boolean(runId)),
@@ -150,8 +169,11 @@ export default function App() {
   const approvals: ApprovalRequest[] | null = approvalsPoll.data;
   const manifest: Manifest | null = manifestPoll.data;
 
+  const pendingApproval =
+    (approvals ?? []).find((a) => a.status === "pending") ?? null;
+
   return (
-    <div className="app">
+    <div className="app" data-recording={recordingMode ? "true" : "false"}>
       <SyntheticBanner />
       <header className="app-header" data-compact={view === "launch" ? "true" : "false"}>
         <div className="brand-block">
@@ -161,13 +183,31 @@ export default function App() {
               <h1>Clinical Amendment Preflight</h1>
             </>
           ) : (
-            <p className="brand-eyebrow">AURORA-101 · synthetic amendment rehearsal</p>
+            <p className="brand-eyebrow">
+              {recordingMode
+                ? "Recording mode · ?demo=1 · synthetic AURORA-101"
+                : "AURORA-101 · synthetic amendment rehearsal"}
+            </p>
           )}
         </div>
-        <ModeBar ready={ready} executionMode={status?.execution_mode ?? ready?.execution_mode} />
+        <ModeBar
+          ready={ready}
+          executionMode={status?.execution_mode ?? ready?.execution_mode}
+          runId={runId}
+          status={status}
+          recordingMode={recordingMode}
+        />
       </header>
 
       <StageIndicator status={status} />
+      <ResumeProofBanner
+        runId={runId}
+        status={status?.status ?? null}
+        sessionId={pendingApproval?.session_id ?? status?.pending_approval?.interrupt_id}
+        invocationId={
+          pendingApproval?.invocation_id ?? status?.pending_approval?.invocation_id
+        }
+      />
       <ViewNav active={view} onChange={setView} unlocked={unlocked} />
 
       {status && isRetryableFailure(status.status) && (
@@ -187,6 +227,7 @@ export default function App() {
             recentError={recentPoll.error}
             onReloadRecent={recentPoll.reload}
             onStarted={(m) => onStarted(m)}
+            recordingMode={recordingMode}
             onReset={() => {
               setMeta(null);
               setAudit(null);
@@ -201,6 +242,7 @@ export default function App() {
             loading={changesPoll.loading}
             error={changesPoll.error}
             onRetry={changesPoll.reload}
+            recordingMode={recordingMode}
           />
         )}
         {view === "impact" && (
@@ -229,6 +271,7 @@ export default function App() {
             loading={actionsPoll.loading}
             error={actionsPoll.error}
             onRetry={actionsPoll.reload}
+            recordingMode={recordingMode}
             onDecision={() => {
               statusPoll.reload();
               actionsPoll.reload();
@@ -245,6 +288,7 @@ export default function App() {
             loading={manifestPoll.loading}
             error={manifestPoll.error}
             onRetry={manifestPoll.reload}
+            recordingMode={recordingMode}
           />
         )}
       </main>
@@ -253,6 +297,7 @@ export default function App() {
         <span>
           {runId ? `Run ${runId}` : "No active run"}
           {status && !isTerminal(status.status) ? " · polling" : ""}
+          {recordingMode ? " · recording mode" : ""}
         </span>
         <span>Judge-facing demo · no chatbot</span>
       </footer>

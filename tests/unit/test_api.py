@@ -257,6 +257,7 @@ def test_openapi_generation_and_snapshot(client: TestClient) -> None:
         "/api/runs/{run_id}/audit/verify",
         "/api/runs/{run_id}/manifest",
         "/api/demo/reset",
+        "/api/demo/recording-readiness",
     ):
         assert path in paths, path
 
@@ -270,5 +271,5 @@ def test_openapi_generation_and_snapshot(client: TestClient) -> None:
         SNAPSHOT.write_text(
             json.dumps(normalized, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        # First write still asserts structure
-        assert "/api/runs" in normalized["paths"]
+    assert "/api/demo/recording-readiness" in normalized["paths"]
+    assert "/api/runs" in normalized["paths"]

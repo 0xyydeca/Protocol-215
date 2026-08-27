@@ -1,133 +1,155 @@
-# DEMO_SCRIPT — Protocol 215 (≤4 minutes)
+# DEMO_SCRIPT — Protocol 215 (3:55 incident-driven storyboard)
 
-Synthetic AURORA-101 only. Do not claim live Vertex accuracy unless the Mode bar shows **Live Gemini**. Measured local evaluation (Prompt 13) used Fake Compiler + deterministic IR.
+Synthetic AURORA-101 only. Open the UI with **`?demo=1`** for judge-facing recording mode.
+
+**Do not claim Google Cloud or Live Gemini unless the Mode bar shows those values from the backend.**
 
 ## Pre-flight (before recording)
 
-1. `./scripts/reset_demo.sh` (cloud: add `--confirm`)
-2. Confirm Mode bar: **Synthetic Study** · **Local** or **Google Cloud** · **Fake Compiler** or **Live Gemini** · model ID · Cloud Run revision (cloud only)
-3. Open fixture PDFs ready: `fixtures/protocols/AURORA-101_Protocol_v1.0.pdf` and `…_v2.0.pdf`
-4. Second browser tab ready for Cloud Logging / Pub/Sub / Firestore (cloud proof — no secrets)
+```bash
+./scripts/recording_preflight.sh --api https://YOUR-WEB-URL --web https://YOUR-WEB-URL --reset --confirm
+```
+
+Or locally (cloud checks will FAIL — expected for local rehearsal):
+
+```bash
+./scripts/recording_preflight.sh --api http://127.0.0.1:8000
+./scripts/reset_demo.sh
+```
+
+Confirm Mode bar (backend-observed only):
+
+- Synthetic Study
+- Local **or** Google Cloud
+- Fake Compiler **or** Live Gemini
+- Model ID (actual)
+- Revision (Cloud Run `K_REVISION`, or —)
+- Run / Status (update as the run progresses)
+
+Open: `https://…/?demo=1` (or `http://localhost:5173/?demo=1`).
+
+Fixture PDFs: `fixtures/protocols/AURORA-101_Protocol_v1.0.pdf` and `…_v2.0.pdf`.
+
+Second tab ready for Console proof (Pub/Sub / Logging / Firestore) — **no secrets**.
 
 ---
 
-## Timed narrative
+## Timed narrative (3:55)
 
-### 0:00–0:20 — Problem
+### 0:00–0:28 — Phoenix conflict cold open
 
-On the launch signature screen, read:
+On Launch (`?demo=1`), the **scenario preview** is visible:
 
-> Clinical-trial sites can operate under different protocol versions for an average of **215** days.
+> Phoenix · P002  
+> Dose: 12:00 · New 6-hour sample: 18:00 · Courier: 17:30 · Overnight storage: unavailable
 
-Pause for the brand reveal: **Protocol 215 · Clinical Amendment Preflight**.
+Narrate: *“A six-hour PK draw after a noon dose lands after the courier leaves — and this site has no validated overnight storage.”*
 
-### 0:20–0:38 — Concept
+This preview is **explanatory**, not a fabricated run result.
 
-One sentence: most tools show what changed; Protocol 215 rehearses what will break, executes safe work, gates sensitive actions, and verifies before patients.
+### 0:28–0:48 — Meaning of 215
 
-Point at Mode bar (Synthetic Study · runtime · compiler — never call Fake Compiler “live”).
+Signature title on screen:
 
-### 0:38–1:00 — Cloud trigger
+> **215 DAYS** of protocol-version fragmentation  
+> **PROTOCOL 215** · Clinical Amendment Preflight  
+> Rehearse every protocol amendment before it reaches a patient.
 
-1. Select AURORA-101 scenario  
+Narrate: *“Sites can run mismatched protocol versions for about 215 days. Protocol 215 rehearses the amendment before it reaches a patient.”*
+
+### 0:48–1:05 — Cloud proof
+
+Point at the Mode bar. Read **exactly** what it shows (Google Cloud · Live Gemini · model · Revision).
+
+Optional cutaway (≤10s): Cloud Run `.run.app` URL, Pub/Sub topic, or Logging line — no keys.
+
+### 1:05–1:25 — Upload and event
+
+1. Scenario AURORA-101 (default)  
 2. Upload v1 + v2 PDFs  
-3. Click **Start Amendment Preflight**  
-4. Note 202 response / run id; stage indicator moves past Upload  
+3. **Start Amendment Preflight**  
+4. Note run ID; stage indicator leaves Launch/Compile as backend status advances  
 
-**Cloud proof (pick ≥2 across the demo):** Cloud Run `.run.app` URL · revision pill · Pub/Sub `amendment.received` · Vertex/Gemini request · Firestore run doc · Logging entries.
+Narrate: *“Upload publishes `amendment.received`. The worker runs asynchronously — the UI does not invent outcomes.”*
 
-### 1:00–1:35 — Semantic changes
+### 1:25–1:55 — Gemini semantic changes
 
-Open **Semantic Redline**. Confirm **five** evidence-linked changes (lab contact, 6h PK, fasting, EDC temp, conditional ECG). Click one card; show page evidence.
+Open **Semantic Redline**. Five evidence-linked change cards should be readable at 1080p.
 
-### 1:35–2:10 — Trial Twin
+Click the **6-hour PK** card → show **page 8 / SEC-PK** evidence.
 
-Open **215-Day Timeline** (fragmented site activation), then **Findings**. Highlight Boston training, Seattle approval, P001 immutability, and the **Phoenix P002** courier/storage conflict card.
+### 1:55–2:20 — Trial Twin
 
-### 2:10–2:40 — Autonomous actions
+**215-Day Timeline**: Phoenix, Boston, Seattle visible **without horizontal scrolling**.
 
-Open **Action Ledger**. Show GREEN tools already executed (contact directory / EDC / training tasks as produced by the live workflow). Note RED never executes.
+**Findings**: Phoenix · P002 is the dominant card (dose / sample / courier / storage).
 
-### 2:40–3:10 — Phoenix conflict
+### 2:20–2:45 — Safe actions
 
-Return to Findings / Timeline if needed. State clearly: dose 12:00 → 6h sample 18:00; courier 17:30; no overnight storage → activation blocked for P002.
+**Action Ledger** three columns:
 
-### 3:10–3:30 — Approval and resume
+- Completed automatically (IDs + timestamps from backend)
+- Waiting for approval
+- Blocked (RED never executes)
 
-On Action Ledger, open the AMBER approval panel. Approve once. Watch status leave `AWAITING_APPROVAL` (resume event / stage progress). Do not double-click approve.
+### 2:45–3:20 — Approval and resume
 
-### 3:30–3:48 — Verification
+Open the AMBER panel. Show:
 
-Open **Manifest**. Show invariant results (all pass for the happy path). Optionally hit audit verify if shown.
+- protocol evidence · operational evidence  
+- before / proposed after  
+- consequences of approval / rejection  
+- run ID · session ID · invocation ID  
 
-### 3:48–4:00 — Manifest and close
+**Approve once** (button disables immediately).
 
-Download or print manifest. Close on: evidence-linked release package, synthetic only, ready for judges’ questions.
+Watch **Resume proof** strip: status moves **AWAITING_APPROVAL → RESUMING → VERIFYING** with the **same** run/session/invocation identity. Completed GREEN actions are **not** replayed.
+
+### 3:20–3:45 — Manifest
+
+**Amendment Release Manifest** — only after backend confirmation:
+
+- sites / participants evaluated  
+- changes detected · evidence coverage  
+- unauthorized RED · AMBER without approval · duplicates  
+- completed visits altered · site-version conflicts  
+- audit-chain verification  
+
+Do not announce “success” until values appear from the API.
+
+### 3:45–3:55 — Final tagline
+
+> Protocol 215 — rehearse every protocol amendment before it reaches a patient.  
+> Synthetic data only.
 
 ---
 
-## Click checklist (judge-facing)
+## Click checklist
 
-1. Wait for signature brand reveal (or skip wait ~2s)  
-2. Choose scenario (default OK)  
-3. Choose old PDF  
-4. Choose new PDF  
-5. **Start Amendment Preflight**  
-6. Nav → Semantic Redline (auto may land here)  
-7. Optional: click a change chip  
-8. Nav → Impact (optional)  
-9. Nav → 215-Day Timeline  
-10. Nav → Findings  
-11. Nav → Actions  
-12. **Approve** on AMBER panel  
-13. Nav → Manifest  
-14. Download JSON (optional)
-
-**Minimum clicks if auto-nav works:** upload×2 → Start → wait → Actions Approve → Manifest ≈ **5 interactions** after files selected.
+1. Open `?demo=1`  
+2. Wait for signature / scenario preview  
+3. Upload v1 + v2  
+4. Start Amendment Preflight  
+5. Redline → click 6h PK evidence  
+6. Timeline → Findings (P002)  
+7. Actions → Approve once  
+8. Manifest  
 
 ---
 
-## Recording failure risks
+## Failure risks
 
 | Risk | Mitigation |
 | --- | --- |
-| Duplicate PDF pair → 409 | Reset demo first |
-| Still Fake Compiler while claiming Vertex | Read Mode bar; do not invent “live” |
-| Approval double-submit | Single click; wait for resume |
-| Background pipeline slow | Allow ≤30s; show stage indicator |
-| Wrong PDFs / encrypted | Use fixtures only |
-| Cloud reset without confirm | Use `--confirm` |
-| UI shows empty findings | Wait for Rehearse stage; do not hardcode |
-| Network blip on polling | Retry / refresh; do not refresh mid-approval |
+| Claiming Cloud/Live when Mode bar says Local/Fake | Read Mode bar only |
+| `recording-readiness` FAIL | Fix cloud backends before official take |
+| Double-approve | Button disables after first click |
+| Stale prior run | `recording_preflight.sh --reset --confirm` |
+| Empty redline/findings | Wait for backend stages — never hardcode |
+| Horizontal timeline scroll | Use `?demo=1` CSS layout |
 
 ---
 
 ## Cloud proof (visible, no secrets)
 
-Show any **two** of:
-
-- Browser URL `https://protocol-215-web-….run.app`
-- Mode bar **Revision: …** (`K_REVISION`)
-- Console: Pub/Sub message / push ACK for `amendment.received` or `amendment.resume`
-- Vertex AI / Gemini request in Logging (model id only)
-- Firestore `runs/{id}` status transitions
-- Cloud Logging structured lines (`run_id`, `event_id`) — redact project numbers if sensitive
-
-Never show service-account JSON, API keys, or billing pages.
-
----
-
-## Measured local rehearsal (Prompt 14)
-
-Ran `scripts/demo_rehearsal.py` against Fake Compiler + fixture PDFs (actual workflow, not hardcoded UI):
-
-| Segment | Seconds |
-| --- | ---: |
-| Reset → upload | ~0.08 |
-| Upload → AWAITING_APPROVAL | ~0.00–0.05 |
-| Approve → manifest | ~0.00–0.05 |
-| **Total API wall** | **~0.1** |
-
-Judge-facing UI budget remains **≤240s** including narration. All demo-path checks passed (5 changes, GREEN actions, Boston/Seattle/P001/P002 findings, AMBER approval, resume, verified manifest). Results: `demo/rehearsal_results.json`.
-
-**Mode:** Fake Compiler — do not call this live Gemini.
+Show any **two** of: `.run.app` URL · Mode bar Revision · Pub/Sub message · Vertex/Logging model id · Firestore run status · structured logs with `run_id`.

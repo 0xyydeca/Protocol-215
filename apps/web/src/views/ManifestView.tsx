@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { AuditVerify, LaunchMeta, Manifest, RunStatus } from "../api/types";
-import { shortHash } from "../lib/workflow";
 import { ErrorState, LoadingState } from "../components/States";
+import { shortHash } from "../lib/workflow";
 
 type Props = {
   meta: LaunchMeta | null;
@@ -11,7 +11,13 @@ type Props = {
   loading: boolean;
   error: Error | null;
   onRetry: () => void;
+  recordingMode?: boolean;
 };
+
+function metricOrPending(ready: boolean, value: string | number): string {
+  if (!ready) return "Pending backend confirmation";
+  return String(value);
+}
 
 export function ManifestView({
   meta,
@@ -21,12 +27,22 @@ export function ManifestView({
   loading,
   error,
   onRetry,
+  recordingMode = false,
 }: Props) {
   const stats = useMemo(() => {
     if (!manifest) return null;
     const automatic = manifest.actions.filter((a) => a.status === "executed" && !a.approved);
     const approved = manifest.actions.filter((a) => a.approved && a.status === "executed");
     const blocked = manifest.actions.filter((a) => a.status === "blocked");
+    const redUnauthorized = manifest.actions.filter(
+      (a) => a.authorized_tier === "RED" && (a.executed || a.status === "executed"),
+    );
+    const amberWithoutApproval = manifest.actions.filter(
+      (a) =>
+        a.authorized_tier === "AMBER" &&
+        (a.executed || a.status === "executed") &&
+        !a.approved,
+    );
     const sites = new Set(
       [...manifest.findings, ...manifest.actions]
         .map((x) => ("site_id" in x ? x.site_id : null))
@@ -38,12 +54,37 @@ export function ManifestView({
         .filter(Boolean),
     );
     const withEvidence = manifest.changes.filter(
-      (c) => (c.old_evidence?.length ?? 0) + (c.new_evidence?.length ?? 0) + (c.evidence?.length ?? 0) > 0,
+      (c) =>
+        (c.old_evidence?.length ?? 0) +
+          (c.new_evidence?.length ?? 0) +
+          (c.evidence?.length ?? 0) >
+        0,
+    );
+    const duplicateActions = (() => {
+      const keys = new Map<string, number>();
+      for (const a of manifest.actions) {
+        const k = `${a.tool_name}|${a.site_id ?? ""}|${a.participant_id ?? ""}|${a.proposal_id}`;
+        keys.set(k, (keys.get(k) ?? 0) + 1);
+      }
+      return [...keys.values()].filter((n) => n > 1).length;
+    })();
+    const completedVisitsAltered = manifest.invariants.filter(
+      (i) =>
+        /completed.?visit|immutable.?visit|historical.?visit/i.test(i.name + i.message) &&
+        !i.passed,
+    );
+    const siteVersionConflicts = manifest.invariants.filter(
+      (i) => /site.?version|activation|training|approval/i.test(i.name + i.message) && !i.passed,
     );
     return {
       automatic,
       approved,
       blocked,
+      redUnauthorized: redUnauthorized.length,
+      amberWithoutApproval: amberWithoutApproval.length,
+      duplicateActions,
+      completedVisitsAltered: completedVisitsAltered.length,
+      siteVersionConflicts: siteVersionConflicts.length,
       sites: sites.size,
       participants: participants.size,
       evidenceCoverage: manifest.changes.length
@@ -70,18 +111,11 @@ export function ManifestView({
     w.document.write(`<!doctype html><html><head><title>Manifest ${manifest.run_id}</title>
       <style>
         body{font-family:Georgia,serif;padding:2rem;color:#0b1f2a}
-        h1{font-size:1.4rem} .meta{color:#4d606c} table{width:100%;border-collapse:collapse;margin:1rem 0}
-        th,td{border:1px solid #c5d0d6;padding:.4rem;text-align:left;font-size:.9rem}
+        h1{font-size:1.4rem} .meta{color:#4d606c}
       </style></head><body>
       <p><strong>SYNTHETIC DATA ONLY</strong></p>
       <h1>Amendment Release Manifest</h1>
-      <p class="meta">Run ${manifest.run_id} · ${manifest.study_id} · v${manifest.from_version}→v${manifest.to_version}</p>
-      <h2>Changes (${manifest.changes.length})</h2>
-      <ul>${manifest.changes.map((c) => `<li>${c.change_id}: ${c.concept_type} (${c.operation})</li>`).join("")}</ul>
-      <h2>Actions</h2>
-      <ul>${manifest.actions.map((a) => `<li>${a.tool_name} — ${a.status} / ${a.authorized_tier}</li>`).join("")}</ul>
-      <h2>Invariants</h2>
-      <ul>${manifest.invariants.map((i) => `<li>${i.name}: ${i.passed ? "PASS" : "FAIL"} — ${i.message}</li>`).join("")}</ul>
+      <p class="meta">Run ${manifest.run_id} · ${manifest.study_id}</p>
       </body></html>`);
     w.document.close();
     w.focus();
@@ -93,13 +127,20 @@ export function ManifestView({
   if (!manifest) {
     return (
       <p className="empty">
-        Manifest not ready — complete Verify stage after approval (status: {status?.status ?? "—"}).
+        Manifest not ready — complete Verify stage after approval (status:{" "}
+        {status?.status ?? "—"}). No success metrics are shown until the backend confirms.
       </p>
     );
   }
 
+  const ready = Boolean(manifest);
+
   return (
-    <section className="view manifest-view" aria-labelledby="manifest-title">
+    <section
+      className="view manifest-view"
+      aria-labelledby="manifest-title"
+      data-recording={recordingMode ? "true" : "false"}
+    >
       <header className="view-header row">
         <div>
           <h2 id="manifest-title">Amendment Release Manifest</h2>
@@ -115,7 +156,54 @@ export function ManifestView({
         </div>
       </header>
 
-      <dl className="kv manifest-grid">
+      <dl className="kv manifest-grid manifest-priority">
+        <div>
+          <dt>Sites evaluated</dt>
+          <dd>{metricOrPending(ready, stats?.sites ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Participants evaluated</dt>
+          <dd>{metricOrPending(ready, stats?.participants ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Changes detected</dt>
+          <dd>{metricOrPending(ready, manifest.changes.length)}</dd>
+        </div>
+        <div>
+          <dt>Evidence coverage</dt>
+          <dd>{metricOrPending(ready, `${stats?.evidenceCoverage ?? 0}%`)}</dd>
+        </div>
+        <div>
+          <dt>Unauthorized RED actions</dt>
+          <dd>{metricOrPending(ready, stats?.redUnauthorized ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>AMBER actions without approval</dt>
+          <dd>{metricOrPending(ready, stats?.amberWithoutApproval ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Duplicate actions</dt>
+          <dd>{metricOrPending(ready, stats?.duplicateActions ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Completed visits altered</dt>
+          <dd>{metricOrPending(ready, stats?.completedVisitsAltered ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Site-version conflicts</dt>
+          <dd>{metricOrPending(ready, stats?.siteVersionConflicts ?? 0)}</dd>
+        </div>
+        <div>
+          <dt>Audit-chain verification</dt>
+          <dd>
+            {audit == null && "Checking…"}
+            {audit && (
+              <>
+                {audit.ok ? "PASS · Intact" : "FAIL"} · {audit.events_checked} events
+              </>
+            )}
+          </dd>
+        </div>
         <div>
           <dt>Run ID</dt>
           <dd>{manifest.run_id}</dd>
@@ -127,43 +215,6 @@ export function ManifestView({
             <br />
             v{manifest.to_version}: {shortHash(meta?.new_sha256 ?? "")}
           </dd>
-        </div>
-        <div>
-          <dt>Detected changes</dt>
-          <dd>
-            {manifest.changes.length}
-            <ul className="compact">
-              {manifest.changes.map((c) => (
-                <li key={c.change_id}>
-                  {c.change_id} — {c.concept_type}
-                </li>
-              ))}
-            </ul>
-          </dd>
-        </div>
-        <div>
-          <dt>Evidence coverage</dt>
-          <dd>{stats?.evidenceCoverage ?? 0}%</dd>
-        </div>
-        <div>
-          <dt>Sites evaluated</dt>
-          <dd>{stats?.sites ?? 0}</dd>
-        </div>
-        <div>
-          <dt>Participants evaluated</dt>
-          <dd>{stats?.participants ?? 0}</dd>
-        </div>
-        <div>
-          <dt>Automatic actions</dt>
-          <dd>{stats?.automatic.length ?? 0}</dd>
-        </div>
-        <div>
-          <dt>Approved actions</dt>
-          <dd>{stats?.approved.length ?? 0}</dd>
-        </div>
-        <div>
-          <dt>Blocked actions</dt>
-          <dd>{stats?.blocked.length ?? 0}</dd>
         </div>
         <div>
           <dt>Invariant results</dt>
@@ -179,24 +230,6 @@ export function ManifestView({
               ))}
               {!manifest.invariants.length && <li>None recorded</li>}
             </ul>
-          </dd>
-        </div>
-        <div>
-          <dt>Audit-chain verification</dt>
-          <dd>
-            {audit == null && "Checking…"}
-            {audit && (
-              <>
-                {audit.ok ? "Intact" : "Failed"} · {audit.events_checked} events
-                {!audit.ok && audit.errors.length > 0 && (
-                  <ul className="compact">
-                    {audit.errors.map((e) => (
-                      <li key={e}>{e}</li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
           </dd>
         </div>
         <div>

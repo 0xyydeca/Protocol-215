@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, Header, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, Header, Request, Response, UploadFile
 
 from protocol215.api.background import kick_amendment_received, kick_amendment_resume
 from protocol215.api.container import AppContainer, submission_fingerprint
@@ -16,10 +16,13 @@ from protocol215.api.schemas import (
     CreateRunResponse,
     DemoResetResponse,
     ImpactGraphResponse,
+    RecordingReadinessCheck,
+    RecordingReadinessResponse,
     RunListItem,
     RunStatusResponse,
 )
 from protocol215.api.status import build_run_status
+from protocol215.application.recording_readiness import evaluate_recording_readiness
 from protocol215.domain.enums import ApprovalStatus, WorkflowStatus
 from protocol215.domain.models import ProtocolArtifactRecord, SessionMetadata
 from protocol215.policy.approval import validate_approval_not_stale
@@ -365,6 +368,25 @@ def get_manifest(run_id: str, request: Request) -> dict[str, Any]:
             details={"run_id": run_id},
         )
     return manifest.model_dump(mode="json")
+
+
+@router.get("/api/demo/recording-readiness", response_model=RecordingReadinessResponse)
+def recording_readiness(request: Request, response: Response) -> RecordingReadinessResponse:
+    """
+    Judge-facing recording preflight. Real bounded checks; never mutates state.
+    Does not return secrets.
+    """
+    container = _container(request)
+    payload = evaluate_recording_readiness(container.settings, state=container.state)
+    if payload["overall"] != "PASS":
+        response.status_code = 503
+    return RecordingReadinessResponse(
+        overall=payload["overall"],
+        checks=[RecordingReadinessCheck(**c) for c in payload["checks"]],
+        failed_count=payload["failed_count"],
+        passed_count=payload["passed_count"],
+        observed=payload["observed"],
+    )
 
 
 @router.post("/api/demo/reset", response_model=DemoResetResponse)

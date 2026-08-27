@@ -92,6 +92,20 @@ class DemoResetResponse(BaseModel):
     twin_snapshot: dict[str, Any] = Field(default_factory=dict)
 
 
+class RecordingReadinessCheck(BaseModel):
+    name: str
+    status: str  # PASS | FAIL
+    detail: str
+
+
+class RecordingReadinessResponse(BaseModel):
+    overall: str  # PASS | FAIL
+    checks: list[RecordingReadinessCheck]
+    failed_count: int = 0
+    passed_count: int = 0
+    observed: dict[str, Any] = Field(default_factory=dict)
+
+
 class ImpactGraphResponse(BaseModel):
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)

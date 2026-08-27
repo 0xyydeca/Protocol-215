@@ -209,6 +209,9 @@ export type ApprovalRequest = {
   reason_approval_required?: string;
   consequences_of_approval?: string;
   consequences_of_rejection?: string;
+  session_id?: string | null;
+  invocation_id?: string | null;
+  interrupt_id?: string | null;
 };
 
 export type InvariantResult = {

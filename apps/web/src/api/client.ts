@@ -134,4 +134,14 @@ export const api = {
     const q = confirm ? "?confirm=true" : "";
     return parse(await fetch(`/api/demo/reset${q}`, { method: "POST" }));
   },
+
+  async recordingReadiness(): Promise<{
+    overall: string;
+    checks: { name: string; status: string; detail: string }[];
+    failed_count: number;
+    passed_count: number;
+    observed: Record<string, unknown>;
+  }> {
+    return parse(await fetch("/api/demo/recording-readiness"));
+  },
 };
