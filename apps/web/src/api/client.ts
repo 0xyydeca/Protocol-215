@@ -29,6 +29,13 @@ export class ApiError extends Error {
   }
 }
 
+/** API origin for hosted UI (Vercel). Empty = same-origin / Vite proxy. */
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+function apiUrl(path: string): string {
+  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 async function parse<T>(res: Response): Promise<T> {
   const text = await res.text();
   let data: unknown = null;
@@ -52,20 +59,20 @@ async function parse<T>(res: Response): Promise<T> {
 
 export const api = {
   async healthz(): Promise<ReadyzResponse> {
-    return parse(await fetch("/healthz"));
+    return parse(await fetch(apiUrl("/healthz")));
   },
 
   async readyz(): Promise<ReadyzResponse> {
-    return parse(await fetch("/readyz"));
+    return parse(await fetch(apiUrl("/readyz")));
   },
 
   async listRuns(): Promise<RunListItem[]> {
-    return parse(await fetch("/api/runs"));
+    return parse(await fetch(apiUrl("/api/runs")));
   },
 
   async createRun(form: FormData): Promise<CreateRunResponse> {
     return parse(
-      await fetch("/api/runs", {
+      await fetch(apiUrl("/api/runs"), {
         method: "POST",
         body: form,
       }),
@@ -73,27 +80,27 @@ export const api = {
   },
 
   async getRun(runId: string): Promise<RunStatus> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}`)));
   },
 
   async getChanges(runId: string): Promise<SemanticChange[]> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/changes`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/changes`)));
   },
 
   async getImpact(runId: string): Promise<ImpactGraph> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/impact`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/impact`)));
   },
 
   async getFindings(runId: string): Promise<RehearsalFinding[]> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/findings`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/findings`)));
   },
 
   async getActions(runId: string): Promise<ActionExecution[]> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/actions`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/actions`)));
   },
 
   async getApprovals(runId: string): Promise<ApprovalRequest[]> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/approvals`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/approvals`)));
   },
 
   async submitApproval(
@@ -107,7 +114,9 @@ export const api = {
   ): Promise<{ approval_id: string; event_published: boolean }> {
     return parse(
       await fetch(
-        `/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`,
+        apiUrl(
+          `/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`,
+        ),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -118,11 +127,11 @@ export const api = {
   },
 
   async getManifest(runId: string): Promise<Manifest> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/manifest`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/manifest`)));
   },
 
   async verifyAudit(runId: string): Promise<AuditVerify> {
-    return parse(await fetch(`/api/runs/${encodeURIComponent(runId)}/audit/verify`));
+    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/audit/verify`)));
   },
 
   async demoReset(confirm = false): Promise<{
@@ -132,7 +141,7 @@ export const api = {
     participants_restored?: number;
   }> {
     const q = confirm ? "?confirm=true" : "";
-    return parse(await fetch(`/api/demo/reset${q}`, { method: "POST" }));
+    return parse(await fetch(apiUrl(`/api/demo/reset${q}`), { method: "POST" }));
   },
 
   async recordingReadiness(): Promise<{
@@ -142,6 +151,6 @@ export const api = {
     passed_count: number;
     observed: Record<string, unknown>;
   }> {
-    return parse(await fetch("/api/demo/recording-readiness"));
+    return parse(await fetch(apiUrl("/api/demo/recording-readiness")));
   },
 };
