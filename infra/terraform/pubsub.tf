@@ -20,7 +20,7 @@ resource "google_pubsub_subscription" "worker_push" {
   name  = "${var.name_prefix}-worker-push"
   topic = google_pubsub_topic.events.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = 600
 
   retry_policy {
     minimum_backoff = "10s"

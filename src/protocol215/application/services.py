@@ -70,13 +70,22 @@ class AmendmentAppService:
         to_version: str,
         run_id: str | None = None,
     ) -> WorkflowRun:
+        rid = run_id or self.ids.new_id("run-")
+        now = self.clock.now()
+        compiler_model = getattr(self.compiler, "model_id", None) or getattr(
+            self.compiler, "model", None
+        )
         run = WorkflowRun(
-            run_id=run_id or self.ids.new_id("run-"),
+            run_id=rid,
             study_id=study_id,
             from_version=from_version,
             to_version=to_version,
             status=WorkflowStatus.CREATED,
-            created_at=self.clock.now(),
+            created_at=now,
+            updated_at=now,
+            last_checkpoint_at=now,
+            correlation_id=rid,
+            compiler_model=str(compiler_model) if compiler_model else None,
         )
         self.state.save_run(run)
         self.state.save_session_metadata(

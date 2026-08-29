@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir uv
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 COPY apps/api ./apps/api
+COPY fixtures ./fixtures
 RUN uv sync --frozen --no-dev --extra cloud || uv sync --frozen --no-dev
 
 COPY --from=frontend /ui/dist /app/static

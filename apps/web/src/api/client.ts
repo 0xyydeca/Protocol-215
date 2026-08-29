@@ -1,5 +1,4 @@
 import type {
-  ApiErrorBody,
   ApprovalRequest,
   AuditVerify,
   CreateRunResponse,
@@ -12,95 +11,88 @@ import type {
   SemanticChange,
   ActionExecution,
 } from "./types";
+import { apiRequest, TIMEOUTS } from "./request";
+import { resolveApiBaseUrl } from "./config";
 
-export class ApiError extends Error {
-  readonly body: ApiErrorBody;
-  readonly status: number;
+export { ApiError } from "./apiError";
+export { apiUrl, TIMEOUTS, apiRequest } from "./request";
+export { resolveApiBaseUrl, getApiConfig, apiOriginLabel } from "./config";
 
-  constructor(status: number, body: ApiErrorBody) {
-    super(body.message);
-    this.name = "ApiError";
-    this.status = status;
-    this.body = body;
-  }
-
-  get retryable(): boolean {
-    return this.body.retryable;
-  }
-}
-
-/** API origin for hosted UI (Vercel). Empty = same-origin / Vite proxy. */
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-
-function apiUrl(path: string): string {
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-async function parse<T>(res: Response): Promise<T> {
-  const text = await res.text();
-  let data: unknown = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = { message: text };
-  }
-  if (!res.ok) {
-    const body = (data ?? {}) as Partial<ApiErrorBody>;
-    throw new ApiError(res.status, {
-      error_code: body.error_code ?? "http_error",
-      message: body.message ?? `HTTP ${res.status}`,
-      correlation_id: body.correlation_id ?? "unknown",
-      retryable: Boolean(body.retryable),
-      details: body.details,
-    });
-  }
-  return data as T;
-}
+export type FetchOpts = { signal?: AbortSignal };
 
 export const api = {
-  async healthz(): Promise<ReadyzResponse> {
-    return parse(await fetch(apiUrl("/healthz")));
+  apiBaseUrl(): string {
+    return resolveApiBaseUrl();
   },
 
-  async readyz(): Promise<ReadyzResponse> {
-    return parse(await fetch(apiUrl("/readyz")));
+  async healthz(opts: FetchOpts = {}): Promise<ReadyzResponse> {
+    return apiRequest({ path: "/healthz", signal: opts.signal, timeoutMs: TIMEOUTS.health });
   },
 
-  async listRuns(): Promise<RunListItem[]> {
-    return parse(await fetch(apiUrl("/api/runs")));
+  async readyz(opts: FetchOpts = {}): Promise<ReadyzResponse> {
+    return apiRequest({ path: "/readyz", signal: opts.signal, timeoutMs: TIMEOUTS.health });
   },
 
-  async createRun(form: FormData): Promise<CreateRunResponse> {
-    return parse(
-      await fetch(apiUrl("/api/runs"), {
-        method: "POST",
-        body: form,
-      }),
-    );
+  async listRuns(opts: FetchOpts = {}): Promise<RunListItem[]> {
+    return apiRequest({ path: "/api/runs", signal: opts.signal, timeoutMs: TIMEOUTS.poll });
   },
 
-  async getRun(runId: string): Promise<RunStatus> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}`)));
+  async createRun(form: FormData, opts: FetchOpts = {}): Promise<CreateRunResponse> {
+    return apiRequest({
+      path: "/api/runs",
+      method: "POST",
+      body: form,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.upload,
+    });
   },
 
-  async getChanges(runId: string): Promise<SemanticChange[]> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/changes`)));
+  async getRun(runId: string, opts: FetchOpts = {}): Promise<RunStatus> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async getImpact(runId: string): Promise<ImpactGraph> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/impact`)));
+  async getChanges(runId: string, opts: FetchOpts = {}): Promise<SemanticChange[]> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/changes`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async getFindings(runId: string): Promise<RehearsalFinding[]> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/findings`)));
+  async getImpact(runId: string, opts: FetchOpts = {}): Promise<ImpactGraph> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/impact`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async getActions(runId: string): Promise<ActionExecution[]> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/actions`)));
+  async getFindings(runId: string, opts: FetchOpts = {}): Promise<RehearsalFinding[]> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/findings`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async getApprovals(runId: string): Promise<ApprovalRequest[]> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/approvals`)));
+  async getActions(runId: string, opts: FetchOpts = {}): Promise<ActionExecution[]> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/actions`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
+  },
+
+  async getApprovals(runId: string, opts: FetchOpts = {}): Promise<ApprovalRequest[]> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/approvals`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
   async submitApproval(
@@ -111,46 +103,63 @@ export const api = {
       expected_state_version: number;
       comment?: string;
     },
+    opts: FetchOpts = {},
   ): Promise<{ approval_id: string; event_published: boolean }> {
-    return parse(
-      await fetch(
-        apiUrl(
-          `/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`,
-        ),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
-      ),
-    );
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.approval,
+    });
   },
 
-  async getManifest(runId: string): Promise<Manifest> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/manifest`)));
+  async getManifest(runId: string, opts: FetchOpts = {}): Promise<Manifest> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/manifest`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async verifyAudit(runId: string): Promise<AuditVerify> {
-    return parse(await fetch(apiUrl(`/api/runs/${encodeURIComponent(runId)}/audit/verify`)));
+  async verifyAudit(runId: string, opts: FetchOpts = {}): Promise<AuditVerify> {
+    return apiRequest({
+      path: `/api/runs/${encodeURIComponent(runId)}/audit/verify`,
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.poll,
+    });
   },
 
-  async demoReset(confirm = false): Promise<{
+  async demoReset(
+    confirm = false,
+    opts: FetchOpts = {},
+  ): Promise<{
     ok: boolean;
     message: string;
     sites_restored?: number;
     participants_restored?: number;
   }> {
     const q = confirm ? "?confirm=true" : "";
-    return parse(await fetch(apiUrl(`/api/demo/reset${q}`), { method: "POST" }));
+    return apiRequest({
+      path: `/api/demo/reset${q}`,
+      method: "POST",
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.default,
+    });
   },
 
-  async recordingReadiness(): Promise<{
+  async recordingReadiness(opts: FetchOpts = {}): Promise<{
     overall: string;
     checks: { name: string; status: string; detail: string }[];
     failed_count: number;
     passed_count: number;
     observed: Record<string, unknown>;
   }> {
-    return parse(await fetch(apiUrl("/api/demo/recording-readiness")));
+    return apiRequest({
+      path: "/api/demo/recording-readiness",
+      signal: opts.signal,
+      timeoutMs: TIMEOUTS.health,
+    });
   },
 };

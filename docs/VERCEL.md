@@ -1,20 +1,21 @@
-# Vercel — Protocol 215 UI only
+# Vercel — Protocol 215 UI only (optional)
 
-Vercel hosts the **React/Vite judge UI**. It does **not** run the FastAPI API, Google ADK worker, Pub/Sub, Firestore, or Vertex pipeline.
+**Primary recording path:** open the **Cloud Run web URL** (same-origin SPA + API). No `VITE_API_BASE_URL` and no CORS needed for that path.
 
-For the [All Things Agentic Hackathon](https://allthingsagentichackathon.devpost.com/), Google Cloud proof still comes from **Cloud Run** (and friends) via `scripts/deploy.sh` — not from Vercel.
+Vercel remains supported for a hosted UI shell. It does **not** run FastAPI, ADK worker, Pub/Sub, Firestore, or Vertex.
 
-## What works on Vercel
+## Changing `VITE_API_BASE_URL` requires a rebuild
 
-- Static SPA (`apps/web`)
-- Optional link to a public API via `VITE_API_BASE_URL` (usually your Cloud Run web URL)
+Vite inlines `VITE_*` at **build time**. Updating the env var in the Vercel dashboard without redeploying leaves the old API origin in the JS bundle.
 
-## Prerequisites
+## Prerequisites (Vercel only)
 
-1. Deploy API + worker to **Google Cloud Run** (`./scripts/deploy.sh`) **or** another public HTTPS API that serves `/api`, `/readyz`, `/healthz`.
-2. Add the Vercel origin to API `CORS_ORIGINS` (Cloud Run env), e.g.  
-   `https://your-app.vercel.app,http://127.0.0.1:5173,http://localhost:5173`
-3. Vercel project **Root Directory** = `apps/web` (if the Git repo root is `protocol-215/`).
+1. Deploy API + worker to **Google Cloud Run** (`./scripts/deploy.sh`).
+2. Set `VITE_API_BASE_URL` to the Cloud Run **web** URL (HTTPS, no trailing slash).
+3. Add the exact Vercel production and preview origins to API `CORS_ORIGINS` (Terraform `var.cors_origins`), e.g.  
+   `https://protocol-215.vercel.app,https://protocol-215-git-main-….vercel.app,http://127.0.0.1:5173,http://localhost:5173`
+4. Do **not** set `CORS_ORIGINS=*`. The API uses `allow_credentials=False` and allows `GET`, `POST`, `OPTIONS` with `Content-Type`, `Idempotency-Key`, and `X-Correlation-ID`.
+5. Vercel project **Root Directory** = `apps/web` (repo root `protocol-215/`).
 
 ## Env (Vercel → Project → Settings → Environment Variables)
 
@@ -22,30 +23,23 @@ For the [All Things Agentic Hackathon](https://allthingsagentichackathon.devpost
 | --- | --- |
 | `VITE_API_BASE_URL` | `https://YOUR-CLOUD-RUN-WEB.run.app` (no trailing slash) |
 
-Rebuild after changing this (Vite inlines it at build time).
+Production builds **fail** when this is missing or not HTTPS (`scripts/check-vite-api-base.mjs`).
+
+At startup the UI shows the resolved API origin and gates upload on `/healthz`. It will not silently send `/api` to Vercel.
 
 ## CLI deploy
 
 ```bash
 cd apps/web
 npm ci
-npx vercel login          # once
-npx vercel                # preview
-npx vercel --prod         # production
+npx vercel login
+npx vercel --prod
 ```
 
-Or connect the GitHub repo in the Vercel dashboard with root `apps/web`.
-
-## Local still recommended for rehearsal
+## Local rehearsal
 
 ```bash
 ./scripts/run_local.sh
 cd apps/web && npm run dev
 # http://127.0.0.1:5173/?demo=1
 ```
-
-## Mode bar honesty
-
-- UI on Vercel + API on Cloud Run → Mode bar should show **Google Cloud** (from `/readyz`).
-- UI on Vercel + no API / wrong URL → broken demo; do not claim Cloud.
-- UI on Vercel + local API via tunnel → still **Local** unless the API itself runs on GCP.

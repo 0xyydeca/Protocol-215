@@ -8,7 +8,6 @@ from typing import Any
 
 from protocol215.adapters.audit_log import HashChainedAuditLog
 from protocol215.adapters.clock import SystemClock
-from protocol215.adapters.event_bus_inprocess import InProcessEventBus
 from protocol215.adapters.fakes import FakeActionPlanner
 from protocol215.adapters.gemini.factory import build_protocol_compiler
 from protocol215.adapters.identifiers import UUIDIdentifierGenerator
@@ -16,6 +15,13 @@ from protocol215.adapters.object_store_local import LocalFileObjectStore
 from protocol215.adapters.state_store_firestore import FirestoreStateStore
 from protocol215.adapters.state_store_memory import InMemoryStateStore
 from protocol215.adapters.state_store_sqlite import SQLiteStateStore
+from protocol215.api.factories import (
+    adapter_class_name,
+    build_event_bus,
+    build_object_store,
+    build_state_store,
+    log_selected_adapters,
+)
 from protocol215.application.demo_reset import (
     DemoResetResult,
     clear_firestore_demo_collections,
@@ -25,7 +31,7 @@ from protocol215.application.demo_reset import (
     twin_baseline_snapshot,
 )
 from protocol215.application.services import AmendmentAppService
-from protocol215.config import Settings, StateStoreBackend
+from protocol215.config import Settings
 from protocol215.ports import EventBus, ObjectStore, StateStore
 
 
@@ -40,6 +46,15 @@ class AppContainer:
     submission_index: dict[str, str] = field(default_factory=dict)
     # Last twin baseline after reset (for demo UI / reset response)
     last_twin_snapshot: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def actual_adapters(self) -> dict[str, str]:
+        return {
+            "object_store": adapter_class_name(self.objects),
+            "state_store": adapter_class_name(self.state),
+            "event_bus": adapter_class_name(self.events),
+            "compiler": adapter_class_name(self.service.compiler),
+        }
 
     def reset(self, *, confirmed: bool = False) -> DemoResetResult:
         """
@@ -98,18 +113,27 @@ class AppContainer:
             Path(self.settings.local_object_store_path).mkdir(parents=True, exist_ok=True)
 
         self.submission_index.clear()
-        twin = twin_baseline_snapshot()
+        try:
+            twin = twin_baseline_snapshot()
+        except Exception:  # noqa: BLE001 — cloud image must ship fixtures; never fail reset after clear
+            twin = {
+                "site_count": 0,
+                "participant_count": 0,
+                "site_ids": [],
+                "participant_ids": [],
+            }
         self.last_twin_snapshot = twin
 
         return DemoResetResult(
             ok=True,
             message=(
                 "Demo state cleared. Twin baseline restored from fixtures "
-                f"({twin['site_count']} sites, {twin['participant_count']} participants). "
+                f"({twin.get('site_count', 0)} sites, "
+                f"{twin.get('participant_count', 0)} participants). "
                 "Source protocol PDFs preserved."
             ),
-            sites_restored=int(twin["site_count"]),
-            participants_restored=int(twin["participant_count"]),
+            sites_restored=int(twin.get("site_count", 0)),
+            participants_restored=int(twin.get("participant_count", 0)),
             runs_cleared=runs_before,
             objects_cleared=objects_cleared,
             fixtures_preserved=fixtures_short[:40],
@@ -125,26 +149,29 @@ class AppContainer:
 
 
 def build_container(settings: Settings) -> AppContainer:
-    settings.local_object_store_path.mkdir(parents=True, exist_ok=True)
-    objects: ObjectStore = LocalFileObjectStore(settings.local_object_store_path)
-    if settings.state_store_backend == StateStoreBackend.SQLITE:
-        settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
-        state: StateStore = SQLiteStateStore(settings.sqlite_path)
-    else:
-        state = InMemoryStateStore()
-    events: EventBus = InProcessEventBus()
+    objects = build_object_store(settings)
+    state = build_state_store(settings)
+    events = build_event_bus(settings)
     clock = SystemClock()
     ids = UUIDIdentifierGenerator()
     audit = HashChainedAuditLog(state, clock, ids)
+    compiler = build_protocol_compiler(settings)
     service = AmendmentAppService(
         state=state,
         objects=objects,
         events=events,
         audit=audit,
-        compiler=build_protocol_compiler(settings),
+        compiler=compiler,
         planner=FakeActionPlanner(include_amber=True),
         clock=clock,
         ids=ids,
+    )
+    log_selected_adapters(
+        settings=settings,
+        object_store=objects,
+        state_store=state,
+        event_bus=events,
+        compiler=compiler,
     )
     return AppContainer(
         settings=settings,

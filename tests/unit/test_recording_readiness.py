@@ -55,6 +55,7 @@ def test_recording_readiness_fails_when_live_deps_unavailable(tmp_path: Path) ->
     assert by_name["pubsub_topic_reachable"]["status"] == "FAIL"
     assert by_name["fixture_pdfs_available"]["status"] == "PASS"
     assert by_name["audit_verifier_operational"]["status"] == "PASS"
+    assert by_name["cloud_e2e_matched_current_revisions"]["status"] == "FAIL"
     # No mutation: still zero runs
     assert container.state.list_runs() == []
 

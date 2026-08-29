@@ -359,14 +359,20 @@ class WorkflowRun(BaseModel):
     from_version: str
     to_version: str
     created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
     checkpoint: str | None = None
+    last_checkpoint_at: datetime | None = None
     completed_idempotency_keys: list[str] = Field(default_factory=list)
     object_keys: dict[str, str] = Field(default_factory=dict)
     state_version: int = 0
     completed_nodes: list[str] = Field(default_factory=list)
     event_sequence: list[str] = Field(default_factory=list)
+    last_worker_event_id: str | None = None
     failure_class: str | None = None
     failure_detail: str | None = None
+    correlation_id: str | None = None
+    worker_revision: str | None = None
+    compiler_model: str | None = None
 
 
 class ProtocolArtifactRecord(BaseModel):

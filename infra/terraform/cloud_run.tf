@@ -13,7 +13,7 @@ resource "google_cloud_run_v2_service" "web" {
       max_instance_count = var.max_instances
     }
 
-    timeout = "60s"
+    timeout = "300s"
 
     containers {
       image = local.web_image
@@ -83,7 +83,12 @@ resource "google_cloud_run_v2_service" "web" {
       }
       env {
         name  = "CORS_ORIGINS"
-        value = "*"
+        # Exact origins only (same-origin Cloud Run SPA needs none; Vercel must be listed).
+        value = var.cors_origins
+      }
+      env {
+        name  = "WORKER_READYZ_URL"
+        value = google_cloud_run_v2_service.worker.uri
       }
     }
   }
@@ -91,6 +96,7 @@ resource "google_cloud_run_v2_service" "web" {
   depends_on = [
     google_project_service.apis,
     google_artifact_registry_repository.images,
+    google_cloud_run_v2_service.worker,
   ]
 
   lifecycle {
@@ -188,6 +194,10 @@ resource "google_cloud_run_v2_service" "worker" {
       env {
         name  = "PUBSUB_TOPIC_RESUME"
         value = google_pubsub_topic.events.name
+      }
+      env {
+        name  = "ADK_SESSION_BACKEND"
+        value = "firestore"
       }
     }
   }

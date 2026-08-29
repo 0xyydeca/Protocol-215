@@ -6,6 +6,7 @@ Never returns secrets or credential material.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from dataclasses import dataclass
@@ -109,14 +110,12 @@ def _check_gcs(settings: Settings) -> ReadinessCheck:
     if not settings.google_cloud_project or not settings.gcs_bucket:
         return _fail(name, "GOOGLE_CLOUD_PROJECT and GCS_BUCKET required")
     try:
-        from google.cloud import storage
+        from google.cloud import storage  # type: ignore[attr-defined]
 
         client = storage.Client(project=settings.google_cloud_project)
         bucket = client.bucket(settings.gcs_bucket)
-        # Bounded metadata fetch — no writes.
-        exists = bool(bucket.exists(timeout=8))
-        if not exists:
-            return _fail(name, f"bucket not found: {settings.gcs_bucket}")
+        # Bounded read — prefer objects.list over buckets.get (IAM often lacks buckets.get).
+        next(bucket.list_blobs(max_results=1), None)
         return _pass(name, f"bucket={settings.gcs_bucket} reachable")
     except Exception as exc:  # noqa: BLE001 — surface real probe failure
         return _fail(name, f"{type(exc).__name__}: {exc}")
@@ -136,7 +135,7 @@ def _check_firestore(settings: Settings) -> ReadinessCheck:
             database=settings.firestore_database or "(default)",
         )
         # Bounded read of a non-mutating sentinel; list collections is read-only.
-        _ = list(db.collections(page_size=1))
+        _ = next(iter(db.collections()), None)
         return _pass(name, f"project={settings.google_cloud_project} reachable")
     except Exception as exc:  # noqa: BLE001
         return _fail(name, f"{type(exc).__name__}: {exc}")
@@ -150,7 +149,7 @@ def _check_pubsub(settings: Settings) -> ReadinessCheck:
         return _fail(name, "GOOGLE_CLOUD_PROJECT required")
     topic = settings.pubsub_topic_received
     try:
-        from google.cloud import pubsub_v1
+        from google.cloud import pubsub_v1  # type: ignore[attr-defined]
 
         client = pubsub_v1.PublisherClient()
         path = client.topic_path(settings.google_cloud_project, topic)
@@ -161,23 +160,98 @@ def _check_pubsub(settings: Settings) -> ReadinessCheck:
 
 
 def _check_worker_handler(settings: Settings) -> ReadinessCheck:
+    """
+    Prove the *current* worker deployment has a handler.
+
+    Never infer handler presence from Pub/Sub topic reachability alone.
+    """
     name = "worker_handler_configured"
     flagged = os.environ.get("WORKER_HANDLER_CONFIGURED", "").lower() in {
         "1",
         "true",
         "yes",
     }
+    expected_revision = (
+        os.environ.get("WORKER_EXPECTED_REVISION")
+        or os.environ.get("K_REVISION")
+        or os.environ.get("CLOUD_RUN_REVISION")
+    )
+
+    # 1) Authenticated worker /readyz when URL configured.
+    worker_url = settings.worker_readyz_url or os.environ.get("WORKER_READYZ_URL")
+    if worker_url:
+        try:
+            import urllib.request
+
+            import google.auth.transport.requests
+            import google.oauth2.id_token
+
+            base = worker_url.rstrip("/")
+            req = urllib.request.Request(f"{base}/readyz")
+            # ID token for Cloud Run (audience = service URL without path).
+            audience = base
+            for suffix in ("/readyz", "/healthz"):
+                if audience.endswith(suffix):
+                    audience = audience[: -len(suffix)]
+            auth_req = google.auth.transport.requests.Request()
+            token = google.oauth2.id_token.fetch_id_token(auth_req, audience)  # type: ignore[no-untyped-call]
+            req.add_header("Authorization", f"Bearer {token}")
+            with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+                body = json.loads(resp.read().decode())
+            if body.get("status") != "ok":
+                return _fail(name, f"worker /readyz unavailable: {body.get('checks')}")
+            checks = body.get("checks") or {}
+            handler_check = checks.get("handler_configured") or {}
+            if not handler_check.get("ok"):
+                return _fail(name, f"handler not configured: {handler_check}")
+            rev = body.get("cloud_run_revision")
+            if expected_revision and rev and rev != expected_revision:
+                return _fail(
+                    name,
+                    f"revision mismatch: worker={rev} expected={expected_revision}",
+                )
+            return _pass(name, f"worker /readyz ok revision={rev}")
+        except Exception as exc:  # noqa: BLE001
+            return _fail(name, f"worker /readyz probe failed: {type(exc).__name__}: {exc}")
+
+    # 2) Firestore heartbeat written by production worker on startup.
+    if (
+        settings.state_store_backend == StateStoreBackend.FIRESTORE
+        and settings.google_cloud_project
+    ):
+        try:
+            from google.cloud import firestore
+
+            db = firestore.Client(project=settings.google_cloud_project)
+            doc = db.collection("worker_heartbeats").document("current").get()
+            if not doc.exists:
+                return _fail(name, "no worker heartbeat document")
+            data = doc.to_dict() or {}
+            if not data.get("handler_configured"):
+                return _fail(name, "heartbeat handler_configured=false")
+            rev = data.get("revision")
+            # Heartbeat may be worker revision while web has different K_REVISION —
+            # only enforce when WORKER_EXPECTED_REVISION is set explicitly.
+            if (
+                os.environ.get("WORKER_EXPECTED_REVISION")
+                and expected_revision
+                and rev
+                and rev != expected_revision
+            ):
+                return _fail(
+                    name,
+                    f"heartbeat revision {rev} != expected {expected_revision}",
+                )
+            return _pass(name, f"heartbeat revision={rev}")
+        except Exception as exc:  # noqa: BLE001
+            return _fail(name, f"heartbeat read failed: {type(exc).__name__}: {exc}")
+
     if flagged:
         return _pass(name, "WORKER_HANDLER_CONFIGURED=true")
-    # Cloud Pub/Sub push to worker implies handler wiring for the demo.
-    if settings.event_bus_backend == EventBusBackend.PUBSUB and settings.google_cloud_project:
-        pub = _check_pubsub(settings)
-        if pub.status == "PASS":
-            return _pass(name, "Pub/Sub topic reachable (worker push path expected)")
-        return _fail(name, f"Pub/Sub not reachable: {pub.detail}")
     return _fail(
         name,
-        "worker handler not configured (require Pub/Sub cloud path or WORKER_HANDLER_CONFIGURED)",
+        "set WORKER_READYZ_URL or ensure worker heartbeat; "
+        "Pub/Sub topic existence alone is insufficient",
     )
 
 
@@ -233,6 +307,66 @@ def _check_audit_verifier(state: StateStore | None) -> ReadinessCheck:
         return _fail(name, f"{type(exc).__name__}: {exc}")
 
 
+def _check_cloud_e2e_for_current_revisions(settings: Settings) -> ReadinessCheck:
+    """
+    Recording readiness cannot PASS unless the latest cloud E2E succeeded
+    against the currently deployed web and worker revisions.
+    """
+    name = "cloud_e2e_matched_current_revisions"
+    if settings.state_store_backend != StateStoreBackend.FIRESTORE:
+        return _fail(name, "requires Firestore to read cloud_e2e_results/latest")
+    if not settings.google_cloud_project:
+        return _fail(name, "GOOGLE_CLOUD_PROJECT required")
+    web_rev = os.environ.get("K_REVISION") or os.environ.get("CLOUD_RUN_REVISION")
+    if not web_rev:
+        return _fail(name, "K_REVISION not set on web service")
+    try:
+        from google.cloud import firestore
+
+        db = firestore.Client(
+            project=settings.google_cloud_project,
+            database=settings.firestore_database or "(default)",
+        )
+        doc = db.collection("cloud_e2e_results").document("latest").get()
+        if not doc.exists:
+            return _fail(name, "no cloud_e2e_results/latest — run scripts/cloud_e2e_test.sh")
+        data = doc.to_dict() or {}
+        if data.get("result") != "PASS":
+            return _fail(name, f"latest E2E result={data.get('result')!r}")
+        e2e_web = str(data.get("web_revision") or "")
+        e2e_worker = str(data.get("worker_revision") or "")
+        if web_rev not in e2e_web and e2e_web not in web_rev:
+            return _fail(
+                name,
+                f"E2E web_revision={e2e_web!r} does not match current K_REVISION={web_rev!r}",
+            )
+        # Worker revision: prefer heartbeat, else E2E-recorded worker revision only.
+        worker_rev = None
+        try:
+            hb = db.collection("worker_heartbeats").document("current").get()
+            if hb.exists:
+                worker_rev = (hb.to_dict() or {}).get("revision")
+        except Exception:  # noqa: BLE001
+            worker_rev = None
+        expected_worker = os.environ.get("WORKER_EXPECTED_REVISION") or worker_rev
+        if (
+            expected_worker
+            and e2e_worker
+            and expected_worker not in e2e_worker
+            and e2e_worker not in str(expected_worker)
+        ):
+            return _fail(
+                name,
+                f"E2E worker_revision={e2e_worker!r} != current worker={expected_worker!r}",
+            )
+        return _pass(
+            name,
+            f"E2E PASS run_id={data.get('run_id')} web={e2e_web} worker={e2e_worker}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _fail(name, f"{type(exc).__name__}: {exc}")
+
+
 def evaluate_recording_readiness(
     settings: Settings,
     *,
@@ -251,6 +385,7 @@ def evaluate_recording_readiness(
         _check_fixture_pdfs(),
         _check_no_stale_runs(state),
         _check_audit_verifier(state),
+        _check_cloud_e2e_for_current_revisions(settings),
     ]
     failed = [c for c in checks if c.status != "PASS"]
     overall = "PASS" if not failed else "FAIL"

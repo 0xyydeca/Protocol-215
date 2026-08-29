@@ -54,11 +54,17 @@ class VertexGeminiProtocolCompiler:
         model: str,
         client: Any | None = None,
         max_retries: int = 3,
+        http_timeout_ms: int = 120_000,
+        max_output_tokens: int = 8192,
+        compile_deadline_seconds: float = 180.0,
     ) -> None:
         self.project = project
         self.location = location
         self.model = model
         self.max_retries = max_retries
+        self.http_timeout_ms = http_timeout_ms
+        self.max_output_tokens = max_output_tokens
+        self.compile_deadline_seconds = compile_deadline_seconds
         self._client = client
         self.last_result: CompilationResult | None = None
         self.last_observability: CompilerObservability | None = None
@@ -68,6 +74,7 @@ class VertexGeminiProtocolCompiler:
             self._client = build_vertex_genai_client(
                 project=self.project,
                 location=self.location,
+                http_timeout_ms=self.http_timeout_ms,
             )
         return self._client
 
@@ -107,6 +114,7 @@ class VertexGeminiProtocolCompiler:
         )
         retry_count = 0
         last_error: Exception | None = None
+        deadline = time.monotonic() + self.compile_deadline_seconds
 
         @retry(
             reraise=True,
@@ -116,6 +124,10 @@ class VertexGeminiProtocolCompiler:
         )
         def _call() -> CompilationResult:
             nonlocal retry_count, last_error
+            if time.monotonic() > deadline:
+                raise TransientGeminiError(
+                    f"per-document compilation deadline exceeded ({self.compile_deadline_seconds}s)"
+                )
             try:
                 return self._generate_once(
                     pdf_part=pdf_part,
@@ -204,7 +216,9 @@ class VertexGeminiProtocolCompiler:
             temperature=0.1,
             response_mime_type="application/json",
             response_schema=ProtocolIR,
+            max_output_tokens=self.max_output_tokens,
             # Intentionally omit tools — extraction model is tool-less.
+            http_options=types.HttpOptions(timeout=self.http_timeout_ms),
         )
         started = time.perf_counter()
         try:
@@ -254,9 +268,11 @@ class VertexGeminiProtocolCompiler:
 def _parse_response(response: Any) -> tuple[ProtocolIR, dict[str, Any] | None]:
     parsed = getattr(response, "parsed", None)
     if isinstance(parsed, ProtocolIR):
-        return parsed, parsed.model_dump()
+        data = _clamp_quotes(parsed.model_dump())
+        ir = ProtocolIR.model_validate(data)
+        return ir, data
     if parsed is not None and hasattr(parsed, "model_dump"):
-        data = parsed.model_dump()
+        data = _clamp_quotes(parsed.model_dump())
         try:
             return ProtocolIR.model_validate(data), data
         except Exception as exc:  # noqa: BLE001
@@ -266,13 +282,27 @@ def _parse_response(response: Any) -> tuple[ProtocolIR, dict[str, Any] | None]:
     if not text:
         raise SchemaGeminiError("empty Gemini response")
     try:
-        data = json.loads(text)
+        data = _clamp_quotes(json.loads(text))
     except json.JSONDecodeError as exc:
         raise SchemaGeminiError(f"invalid JSON: {exc}") from exc
     try:
         return ProtocolIR.model_validate(data), data
     except Exception as exc:  # noqa: BLE001
         raise SchemaGeminiError(f"Pydantic validation failed: {exc}") from exc
+
+
+def _clamp_quotes(obj: Any, *, max_len: int = 160) -> Any:
+    if isinstance(obj, dict):
+        out: dict[str, Any] = {}
+        for k, v in obj.items():
+            if k == "quote" and isinstance(v, str) and len(v) > max_len:
+                out[k] = v[:max_len]
+            else:
+                out[k] = _clamp_quotes(v, max_len=max_len)
+        return out
+    if isinstance(obj, list):
+        return [_clamp_quotes(x, max_len=max_len) for x in obj]
+    return obj
 
 
 def _iter_pages(ir: ProtocolIR) -> list[int]:

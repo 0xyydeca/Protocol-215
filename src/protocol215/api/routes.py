@@ -23,11 +23,18 @@ from protocol215.api.schemas import (
 )
 from protocol215.api.status import build_run_status
 from protocol215.application.recording_readiness import evaluate_recording_readiness
+from protocol215.config import EventBusBackend
 from protocol215.domain.enums import ApprovalStatus, WorkflowStatus
 from protocol215.domain.models import ProtocolArtifactRecord, SessionMetadata
 from protocol215.policy.approval import validate_approval_not_stale
 
 router = APIRouter()
+
+_FAILED_STATUSES = {
+    WorkflowStatus.FAILED_RETRYABLE,
+    WorkflowStatus.FAILED_TERMINAL,
+    WorkflowStatus.FAILED,
+}
 
 
 def _container(request: Request) -> AppContainer:
@@ -70,13 +77,15 @@ async def create_run(
     if fp in container.submission_index:
         existing_id = container.submission_index[fp]
         existing = container.state.get_run(existing_id)
-        if existing is not None:
+        # Stale fingerprint (reset cleared Firestore) or prior failed run → allow retry.
+        if existing is not None and existing.status not in _FAILED_STATUSES:
             raise ApiError(
                 error_code=ApiErrorCode.DUPLICATE,
                 message="Duplicate submission; run already exists for these artifacts.",
                 status_code=409,
                 details={"run_id": existing_id},
             )
+        container.submission_index.pop(fp, None)
 
     run = container.service.create_run(study_id=study, from_version=from_ver, to_version=to_ver)
     old_key = f"runs/{run.run_id}/protocols/v{from_ver}.pdf"
@@ -134,8 +143,10 @@ async def create_run(
     )
     container.submission_index[fp] = run.run_id
 
-    # Kick workflow AFTER response is prepared (BackgroundTasks); do not await Gemini.
-    background_tasks.add_task(kick_amendment_received, container, run.run_id)
+    # Local/in-process: kick stand-in pipeline on this service.
+    # Cloud Pub/Sub: worker consumes amendment.received — do not run Gemini here.
+    if settings.event_bus_backend == EventBusBackend.INPROCESS:
+        background_tasks.add_task(kick_amendment_received, container, run.run_id)
 
     return CreateRunResponse(
         run_id=run.run_id,
@@ -148,6 +159,8 @@ async def create_run(
         old_pages=old_pages,
         new_pages=new_pages,
         event_published=event is not None,
+        event_id=event.event_id if event is not None else None,
+        correlation_id=run.correlation_id or run.run_id,
     )
 
 
@@ -174,11 +187,16 @@ def list_runs(request: Request) -> list[RunListItem]:
 def get_run(run_id: str, request: Request) -> RunStatusResponse:
     container = _container(request)
     try:
-        return build_run_status(container.service, container.settings, run_id)
+        return build_run_status(
+            container.service,
+            container.settings,
+            run_id,
+            container=container,
+        )
     except KeyError as exc:
         raise ApiError(
             error_code=ApiErrorCode.NOT_FOUND,
-            message="Run not found.",
+            message="Run not found in persistent state.",
             status_code=404,
             details={"run_id": run_id},
         ) from exc
@@ -314,13 +332,14 @@ async def submit_approval(
         },
         idempotency_key=f"{run_id}:amendment.resume:{approval_id}:{body.decision.value}",
     )
-    background_tasks.add_task(
-        kick_amendment_resume,
-        container,
-        run_id,
-        approval_id,
-        body.decision == ApprovalStatus.APPROVED,
-    )
+    if container.settings.event_bus_backend == EventBusBackend.INPROCESS:
+        background_tasks.add_task(
+            kick_amendment_resume,
+            container,
+            run_id,
+            approval_id,
+            body.decision == ApprovalStatus.APPROVED,
+        )
     return ApprovalDecisionResponse(
         approval_id=approval_id,
         run_id=run_id,

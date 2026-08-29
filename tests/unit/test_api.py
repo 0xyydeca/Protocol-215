@@ -169,6 +169,25 @@ def test_duplicate_submission_rejected(client: TestClient) -> None:
     assert second.json()["details"]["run_id"] == first.json()["run_id"]
 
 
+def test_resubmit_allowed_after_failed_run(client: TestClient) -> None:
+    from protocol215.domain.enums import WorkflowStatus
+
+    files = {
+        "old_protocol": ("v1.pdf", _minimal_pdf(), "application/pdf"),
+        "new_protocol": ("v2.pdf", _minimal_pdf(pages=2), "application/pdf"),
+    }
+    first = client.post("/api/runs", files=files)
+    assert first.status_code == 202
+    run_id = first.json()["run_id"]
+    container = client.app.state.container
+    run = container.state.get_run(run_id)
+    assert run is not None
+    container.state.save_run(run.model_copy(update={"status": WorkflowStatus.FAILED_RETRYABLE}))
+    second = client.post("/api/runs", files=files)
+    assert second.status_code == 202
+    assert second.json()["run_id"] != run_id
+
+
 def test_list_runs_and_demo_reset(client: TestClient) -> None:
     files = {
         "old_protocol": ("v1.pdf", _minimal_pdf(), "application/pdf"),

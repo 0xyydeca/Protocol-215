@@ -22,6 +22,8 @@ class CreateRunResponse(BaseModel):
     new_pages: int
     event_published: bool
     message: str = "Run accepted; workflow started asynchronously."
+    event_id: str | None = None
+    correlation_id: str | None = None
 
 
 class PendingApprovalSummary(BaseModel):
@@ -54,6 +56,17 @@ class RunStatusResponse(BaseModel):
     checkpoint: str | None = None
     created_at: datetime
     event_sequence: list[str] = Field(default_factory=list)
+    # Stalled-run / recording diagnostics (safe for UI; no secrets / CoT)
+    updated_at: datetime | None = None
+    last_checkpoint_at: datetime | None = None
+    last_worker_event_id: str | None = None
+    last_error_code: str | None = None
+    last_error_detail_safe: str | None = None
+    correlation_id: str | None = None
+    web_revision: str | None = None
+    worker_revision: str | None = None
+    actual_adapters: dict[str, str] = Field(default_factory=dict)
+    compiler_model: str | None = None
 
 
 class RunListItem(BaseModel):

@@ -73,8 +73,16 @@ mypy_path = "src"
 exclude = ["_bmad/", "_bmad-output/", "apps/web/", ".tools/"]
 
 [[tool.mypy.overrides]]
-module = ["google.*", "reportlab.*", "pypdf.*"]
+module = [
+  "google.*",
+  "google.cloud.*",
+  "google.oauth2.*",
+  "google.auth.*",
+  "reportlab.*",
+  "pypdf.*",
+]
 ignore_missing_imports = true
+disable_error_code = ["attr-defined"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

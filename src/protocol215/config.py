@@ -37,6 +37,12 @@ class GeminiBackend(StrEnum):
     VERTEX = "vertex"
 
 
+class AdkSessionBackend(StrEnum):
+    MEMORY = "memory"
+    SQLITE = "sqlite"
+    FIRESTORE = "firestore"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -68,6 +74,16 @@ class Settings(BaseSettings):
     pubsub_topic_resume: str = "protocol-215-events"
     worker_require_oidc: bool = False
 
+    # ADK session persistence (cloud → firestore; tests → sqlite)
+    adk_session_backend: AdkSessionBackend = AdkSessionBackend.MEMORY
+    adk_session_sqlite_path: Path = Field(default=Path("data/adk_sessions.sqlite3"))
+
+    # Gemini bounds (HttpOptions.timeout is milliseconds per google-genai)
+    gemini_http_timeout_ms: int = 120_000
+    gemini_max_output_tokens: int = 8192
+    gemini_compile_deadline_seconds: float = 180.0
+    gemini_max_retries: int = 3
+
     static_assets_dir: Path | None = None  # when set, serve built React (Cloud Run web)
 
     local_object_store_path: Path = Field(default=Path("data/object_store"))
@@ -75,6 +91,8 @@ class Settings(BaseSettings):
     api_host: str = "127.0.0.1"
     api_port: int = 8000
     cors_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
+    # Optional authenticated worker URL for recording-readiness (server-side probe)
+    worker_readyz_url: str | None = None
 
     @property
     def cors_origin_list(self) -> list[str]:

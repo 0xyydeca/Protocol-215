@@ -3,7 +3,7 @@ import { api, ApiError } from "../api/client";
 import type { CreateRunResponse, LaunchMeta, RunListItem } from "../api/types";
 import { ScenarioPreview, SignatureTitle } from "../components/RecordingChrome";
 import { ErrorState, LoadingState } from "../components/States";
-import { shortHash } from "../lib/workflow";
+import { isTerminal, shortHash } from "../lib/workflow";
 
 type Props = {
   recent: RunListItem[] | null;
@@ -12,6 +12,9 @@ type Props = {
   onStarted: (meta: LaunchMeta, created: CreateRunResponse) => void;
   onReset?: () => void;
   recordingMode?: boolean;
+  apiConfigOk?: boolean;
+  apiHealthy?: boolean;
+  cloudMode?: boolean;
 };
 
 const SCENARIOS = [
@@ -31,6 +34,9 @@ export function LaunchView({
   onStarted,
   onReset,
   recordingMode = false,
+  apiConfigOk = true,
+  apiHealthy = true,
+  cloudMode = false,
 }: Props) {
   const [scenarioId, setScenarioId] = useState(SCENARIOS[0].id);
   const [oldFile, setOldFile] = useState<File | null>(null);
@@ -39,6 +45,7 @@ export function LaunchView({
   const [newHash, setNewHash] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [introPhase, setIntroPhase] = useState<"problem" | "brand">("problem");
 
@@ -51,6 +58,8 @@ export function LaunchView({
     () => SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0],
     [scenarioId],
   );
+
+  const uploadEnabled = apiConfigOk && apiHealthy && Boolean(oldFile && newFile) && !submitting;
 
   async function hashFile(file: File): Promise<string> {
     const buf = await file.arrayBuffer();
@@ -71,7 +80,7 @@ export function LaunchView({
   }
 
   async function start() {
-    if (!oldFile || !newFile) return;
+    if (!oldFile || !newFile || !uploadEnabled) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -100,18 +109,37 @@ export function LaunchView({
     }
   }
 
-  async function resetDemo() {
+  async function resetDemoConfirmed() {
     setResetting(true);
     setError(null);
+    setConfirmReset(false);
     try {
-      await api.demoReset();
-      onReloadRecent();
+      await api.demoReset(true);
       onReset?.();
+      onReloadRecent();
+      // Verify no non-terminal run remains (cloud honesty check).
+      const listed = await api.listRuns();
+      const lingering = listed.filter((r) => !isTerminal(r.status));
+      if (lingering.length > 0) {
+        setError(
+          new Error(
+            `Reset completed but ${lingering.length} non-terminal run(s) remain (e.g. ${lingering[0].run_id}).`,
+          ),
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setResetting(false);
     }
+  }
+
+  function onResetClick() {
+    if (cloudMode) {
+      setConfirmReset(true);
+      return;
+    }
+    void resetDemoConfirmed();
   }
 
   return (
@@ -145,6 +173,25 @@ export function LaunchView({
           workflow executes on the backend — this screen does not hardcode outcomes.
         </p>
       </header>
+
+      {!apiConfigOk && (
+        <div className="state-panel error terminal" role="alert">
+          <h3>API configuration failure</h3>
+          <p>
+            VITE_API_BASE_URL is missing or invalid for this host. Requests will not be sent to
+            Vercel. Set the Cloud Run web URL and rebuild the Vite app.
+          </p>
+        </div>
+      )}
+
+      {apiConfigOk && !apiHealthy && (
+        <div className="state-panel error retryable" role="alert">
+          <h3>API not reachable</h3>
+          <p>
+            /healthz has not succeeded yet. Upload stays disabled until the Cloud Run API responds.
+          </p>
+        </div>
+      )}
 
       <div className="launch-grid">
         <label className="field">
@@ -199,7 +246,7 @@ export function LaunchView({
         <button
           type="button"
           className="btn primary"
-          disabled={!oldFile || !newFile || submitting}
+          disabled={!uploadEnabled}
           onClick={() => void start()}
         >
           {submitting ? "Starting…" : "Start Amendment Preflight"}
@@ -207,12 +254,41 @@ export function LaunchView({
         <button
           type="button"
           className="btn ghost"
-          disabled={resetting || submitting}
-          onClick={() => void resetDemo()}
+          disabled={resetting || submitting || !apiConfigOk}
+          onClick={onResetClick}
         >
           {resetting ? "Resetting…" : "Reset demo state"}
         </button>
       </div>
+
+      {confirmReset && (
+        <div className="modal-backdrop" role="presentation">
+          <div
+            className="modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-title"
+          >
+            <h3 id="reset-title">Reset synthetic demo state?</h3>
+            <p>
+              This removes only synthetic run state (runs, twin rehearsal scratch, audit for this
+              demo). It does not touch real clinical systems — none are connected.
+            </p>
+            <div className="modal-actions">
+              <button type="button" className="btn ghost" onClick={() => setConfirmReset(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn danger"
+                onClick={() => void resetDemoConfirmed()}
+              >
+                Confirm reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {submitting && <LoadingState label="Uploading protocols and publishing amendment.received…" />}
       {error && (

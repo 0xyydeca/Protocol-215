@@ -57,13 +57,17 @@ class WorkflowRuntime:
 
     def set_status(self, status: WorkflowStatus, *, checkpoint: str | None = None) -> WorkflowRun:
         run = self.run()
-        updated = run.model_copy(
-            update={
-                "status": status,
-                "checkpoint": checkpoint or status.value,
-                "state_version": run.state_version + 1,
-            }
-        )
+        now = self.clock.now()
+        next_checkpoint = checkpoint or status.value
+        update: dict[str, Any] = {
+            "status": status,
+            "checkpoint": next_checkpoint,
+            "state_version": run.state_version + 1,
+            "updated_at": now,
+        }
+        if next_checkpoint != run.checkpoint:
+            update["last_checkpoint_at"] = now
+        updated = run.model_copy(update=update)
         self.state.save_run(updated)
         return updated
 
@@ -72,7 +76,16 @@ class WorkflowRuntime:
         run = self.run()
         seq = list(run.event_sequence)
         seq.append(name)
-        self.state.save_run(run.model_copy(update={"event_sequence": seq}))
+        now = self.clock.now()
+        self.state.save_run(
+            run.model_copy(
+                update={
+                    "event_sequence": seq,
+                    "last_worker_event_id": name,
+                    "updated_at": now,
+                }
+            )
+        )
 
     def mark_node_complete(self, node_name: str) -> None:
         run = self.run()

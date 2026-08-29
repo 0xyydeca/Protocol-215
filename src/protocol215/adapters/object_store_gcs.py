@@ -42,7 +42,7 @@ class GCSObjectStore:
         if client is not None:
             self._client = client
         else:
-            from google.cloud import storage  # lazy — optional cloud dep
+            from google.cloud import storage  # type: ignore[attr-defined]
 
             self._client = storage.Client(project=project)
         self._bucket = self._client.bucket(bucket_name)

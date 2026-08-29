@@ -12,16 +12,24 @@ def build_vertex_genai_client(
     project: str,
     location: str,
     client: Any | None = None,
+    http_timeout_ms: int | None = None,
 ) -> Any:
     """Return an injectable or lazily constructed Vertex-mode Gen AI client."""
     if client is not None:
         return client
     from google import genai
+    from google.genai import types
+
+    http_options = None
+    if http_timeout_ms is not None:
+        # google-genai HttpOptions.timeout is milliseconds (documented).
+        http_options = types.HttpOptions(timeout=http_timeout_ms)
 
     return genai.Client(
         vertexai=True,
         project=project,
         location=location,
+        http_options=http_options,
     )
 
 

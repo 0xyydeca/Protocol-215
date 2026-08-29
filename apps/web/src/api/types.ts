@@ -105,6 +105,17 @@ export type RunStatus = {
   checkpoint: string | null;
   created_at: string;
   event_sequence: string[];
+  /** Diagnostic fields for stalled-run detection (backend-authored). */
+  updated_at?: string | null;
+  last_checkpoint_at?: string | null;
+  last_worker_event_id?: string | null;
+  last_error_code?: string | null;
+  last_error_detail_safe?: string | null;
+  correlation_id?: string | null;
+  web_revision?: string | null;
+  worker_revision?: string | null;
+  actual_adapters?: Record<string, string> | null;
+  compiler_model?: string | null;
 };
 
 export type RunListItem = {

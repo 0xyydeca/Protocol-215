@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "./api/client";
+import { getApiConfig } from "./api/config";
 import type {
   ActionExecution,
   ApprovalRequest,
@@ -13,11 +14,14 @@ import type {
   SemanticChange,
   ViewId,
 } from "./api/types";
+import { ApiDiagnostics } from "./components/ApiDiagnostics";
 import { ResumeProofBanner, StageIndicator, SyntheticBanner } from "./components/Chrome";
 import { ModeBar } from "./components/ModeBar";
 import { ErrorState } from "./components/States";
+import { StalledRunPanel } from "./components/StalledRunPanel";
 import { ViewNav } from "./components/ViewNav";
 import { usePoll } from "./hooks/usePoll";
+import { useStalledRun } from "./hooks/useStalledRun";
 import { isRecordingMode } from "./lib/recordingMode";
 import { isRetryableFailure, isTerminal } from "./lib/workflow";
 import { ActionsView } from "./views/ActionsView";
@@ -44,85 +48,107 @@ function unlockedViews(_status: RunStatus | null, hasRun: boolean): Set<ViewId> 
 
 export default function App() {
   const [recordingMode] = useState(() => isRecordingMode());
+  const [apiConfig] = useState(() => getApiConfig());
   const [view, setView] = useState<ViewId>("launch");
   const [meta, setMeta] = useState<LaunchMeta | null>(null);
   const runId = meta?.run_id ?? null;
 
-  const readyPoll = usePoll(() => api.readyz(), { intervalMs: 8000 });
-  const recentPoll = usePoll(() => api.listRuns(), { intervalMs: 5000 });
+  const readyPoll = usePoll((signal) => api.readyz({ signal }), {
+    intervalMs: 8000,
+    enabled: apiConfig.ok,
+  });
+  const healthPoll = usePoll((signal) => api.healthz({ signal }), {
+    intervalMs: 10_000,
+    enabled: apiConfig.ok,
+  });
+  const recentPoll = usePoll((signal) => api.listRuns({ signal }), {
+    intervalMs: 5000,
+    enabled: apiConfig.ok,
+  });
 
-  const statusPoll = usePoll(() => api.getRun(runId!), {
-    enabled: Boolean(runId),
+  const statusPoll = usePoll((signal) => api.getRun(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok,
     intervalMs: 1200,
+    shouldStop: (s) => isTerminal(s.status),
     deps: [runId],
   });
 
-  const changesPoll = usePoll(() => api.getChanges(runId!), {
-    enabled: Boolean(runId),
+  const status: RunStatus | null = statusPoll.data;
+  const terminal = isTerminal(status?.status);
+
+  const changesPoll = usePoll((signal) => api.getChanges(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok && !terminal,
     intervalMs: 2000,
-    deps: [runId, statusPoll.data?.status],
+    deps: [runId, status?.status],
   });
 
-  const impactPoll = usePoll(() => api.getImpact(runId!), {
-    enabled: Boolean(runId),
+  const impactPoll = usePoll((signal) => api.getImpact(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok && !terminal,
     intervalMs: 2500,
-    deps: [runId, statusPoll.data?.status],
+    deps: [runId, status?.status],
   });
 
-  const findingsPoll = usePoll(() => api.getFindings(runId!), {
-    enabled: Boolean(runId),
+  const findingsPoll = usePoll((signal) => api.getFindings(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok && !terminal,
     intervalMs: 2000,
-    deps: [runId, statusPoll.data?.status],
+    deps: [runId, status?.status],
   });
 
-  const actionsPoll = usePoll(() => api.getActions(runId!), {
-    enabled: Boolean(runId),
+  const actionsPoll = usePoll((signal) => api.getActions(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok,
     intervalMs: 1500,
-    deps: [runId, statusPoll.data?.status],
+    shouldStop: () => terminal,
+    deps: [runId, status?.status],
   });
 
-  const approvalsPoll = usePoll(() => api.getApprovals(runId!), {
-    enabled: Boolean(runId),
+  const approvalsPoll = usePoll((signal) => api.getApprovals(runId!, { signal }), {
+    enabled: Boolean(runId) && apiConfig.ok,
     intervalMs: 1500,
-    deps: [runId, statusPoll.data?.status],
+    shouldStop: () => terminal,
+    deps: [runId, status?.status],
   });
 
   const manifestPoll = usePoll(
-    async () => {
+    async (signal) => {
       try {
-        return await api.getManifest(runId!);
+        return await api.getManifest(runId!, { signal });
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) return null;
         throw err;
       }
     },
     {
-      enabled: Boolean(runId),
+      enabled: Boolean(runId) && apiConfig.ok,
       intervalMs: 2000,
-      deps: [runId, statusPoll.data?.status],
+      deps: [runId, status?.status],
     },
   );
+
+  const stall = useStalledRun(status, statusPoll.consecutiveFailures);
 
   const [audit, setAudit] = useState<AuditVerify | null>(null);
   useEffect(() => {
     if (!runId || !manifestPoll.data) return;
     let cancelled = false;
-    void api.verifyAudit(runId).then(
+    const ac = new AbortController();
+    void api.verifyAudit(runId, { signal: ac.signal }).then(
       (v) => {
         if (!cancelled) setAudit(v);
       },
       () => {
-        if (!cancelled)
+        if (!cancelled) {
           setAudit({
             ok: false,
             events_checked: 0,
             errors: ["verify failed"],
             message: "verify failed",
           });
+        }
       },
     );
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [runId, manifestPoll.data]);
 
@@ -130,28 +156,24 @@ export default function App() {
   useEffect(() => {
     if (
       !approvalHinted &&
-      statusPoll.data?.status === "AWAITING_APPROVAL" &&
+      status?.status === "AWAITING_APPROVAL" &&
       view !== "actions" &&
       view !== "launch"
     ) {
       setView("actions");
       setApprovalHinted(true);
     }
-  }, [statusPoll.data?.status, view, approvalHinted]);
+  }, [status?.status, view, approvalHinted]);
 
-  // Recording mode: auto-open Manifest when Verify completes — driven by backend status only.
   useEffect(() => {
     if (!recordingMode) return;
-    const s = statusPoll.data?.status;
+    const s = status?.status;
     if (s === "COMPLETED" || s === "COMPLETED_WITH_BLOCKS" || s === "MANIFEST_READY") {
       if (view !== "manifest" && view !== "launch") setView("manifest");
     }
-  }, [recordingMode, statusPoll.data?.status, view]);
+  }, [recordingMode, status?.status, view]);
 
-  const unlocked = useMemo(
-    () => unlockedViews(statusPoll.data, Boolean(runId)),
-    [statusPoll.data, runId],
-  );
+  const unlocked = useMemo(() => unlockedViews(status, Boolean(runId)), [status, runId]);
 
   const onStarted = useCallback((m: LaunchMeta) => {
     setMeta(m);
@@ -160,8 +182,15 @@ export default function App() {
     setApprovalHinted(false);
   }, []);
 
+  const returnToLaunch = useCallback(() => {
+    setMeta(null);
+    setAudit(null);
+    setView("launch");
+  }, []);
+
   const ready: ReadyzResponse | null = readyPoll.data;
-  const status: RunStatus | null = statusPoll.data;
+  const healthOk =
+    healthPoll.data != null ? healthPoll.data.status === "ok" : healthPoll.error ? false : null;
   const changes: SemanticChange[] | null = changesPoll.data;
   const impact: ImpactGraph | null = impactPoll.data;
   const findings: RehearsalFinding[] | null = findingsPoll.data;
@@ -169,8 +198,12 @@ export default function App() {
   const approvals: ApprovalRequest[] | null = approvalsPoll.data;
   const manifest: Manifest | null = manifestPoll.data;
 
-  const pendingApproval =
-    (approvals ?? []).find((a) => a.status === "pending") ?? null;
+  const pendingApproval = (approvals ?? []).find((a) => a.status === "pending") ?? null;
+
+  const cloudMode =
+    ready?.execution_mode === "cloud" ||
+    ready?.app_env === "cloud" ||
+    status?.execution_mode === "cloud";
 
   return (
     <div className="app" data-recording={recordingMode ? "true" : "false"}>
@@ -199,16 +232,38 @@ export default function App() {
         />
       </header>
 
+      <ApiDiagnostics
+        config={apiConfig}
+        healthOk={apiConfig.ok ? healthOk : false}
+        healthDetail={
+          !apiConfig.ok
+            ? apiConfig.reason
+            : (healthPoll.error?.message ?? (healthOk === false ? "API /healthz failed" : null))
+        }
+      />
+
       <StageIndicator status={status} />
       <ResumeProofBanner
         runId={runId}
         status={status?.status ?? null}
         sessionId={pendingApproval?.session_id ?? status?.pending_approval?.interrupt_id}
-        invocationId={
-          pendingApproval?.invocation_id ?? status?.pending_approval?.invocation_id
-        }
+        invocationId={pendingApproval?.invocation_id ?? status?.pending_approval?.invocation_id}
       />
       <ViewNav active={view} onChange={setView} unlocked={unlocked} />
+
+      {stall.stalled && status && (
+        <StalledRunPanel
+          status={status}
+          elapsedMs={stall.elapsedMs}
+          reason={stall.reason ?? "stale_progress"}
+          onRetryStatus={() => statusPoll.reload()}
+          onReturnLaunch={returnToLaunch}
+        />
+      )}
+
+      {statusPoll.error && !status && (
+        <ErrorState error={statusPoll.error} onRetry={() => statusPoll.reload()} />
+      )}
 
       {status && isRetryableFailure(status.status) && (
         <ErrorState
@@ -228,18 +283,17 @@ export default function App() {
             onReloadRecent={recentPoll.reload}
             onStarted={(m) => onStarted(m)}
             recordingMode={recordingMode}
-            onReset={() => {
-              setMeta(null);
-              setAudit(null);
-              setView("launch");
-            }}
+            apiConfigOk={apiConfig.ok}
+            apiHealthy={healthOk === true}
+            cloudMode={Boolean(cloudMode)}
+            onReset={returnToLaunch}
           />
         )}
         {view === "redline" && (
           <RedlineView
             changes={changes}
             impact={impact}
-            loading={changesPoll.loading}
+            loading={changesPoll.loading && !changes}
             error={changesPoll.error}
             onRetry={changesPoll.reload}
             recordingMode={recordingMode}
@@ -248,7 +302,7 @@ export default function App() {
         {view === "impact" && (
           <ImpactGraphView
             graph={impact}
-            loading={impactPoll.loading}
+            loading={impactPoll.loading && !impact}
             error={impactPoll.error}
             onRetry={impactPoll.reload}
           />
@@ -257,7 +311,7 @@ export default function App() {
         {view === "findings" && (
           <FindingsView
             findings={findings}
-            loading={findingsPoll.loading}
+            loading={findingsPoll.loading && !findings}
             error={findingsPoll.error}
             onRetry={findingsPoll.reload}
           />
@@ -268,7 +322,7 @@ export default function App() {
             status={status}
             actions={actions}
             approvals={approvals}
-            loading={actionsPoll.loading}
+            loading={actionsPoll.loading && !actions}
             error={actionsPoll.error}
             onRetry={actionsPoll.reload}
             recordingMode={recordingMode}
@@ -276,6 +330,7 @@ export default function App() {
               statusPoll.reload();
               actionsPoll.reload();
               approvalsPoll.reload();
+              manifestPoll.reload();
             }}
           />
         )}
@@ -285,7 +340,7 @@ export default function App() {
             status={status}
             manifest={manifest}
             audit={audit}
-            loading={manifestPoll.loading}
+            loading={manifestPoll.loading && !manifest}
             error={manifestPoll.error}
             onRetry={manifestPoll.reload}
             recordingMode={recordingMode}
@@ -296,7 +351,7 @@ export default function App() {
       <footer className="app-footer">
         <span>
           {runId ? `Run ${runId}` : "No active run"}
-          {status && !isTerminal(status.status) ? " · polling" : ""}
+          {status && !terminal ? " · polling" : ""}
           {recordingMode ? " · recording mode" : ""}
         </span>
         <span>Judge-facing demo · no chatbot</span>

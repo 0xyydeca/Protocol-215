@@ -53,7 +53,7 @@ variable "min_instances" {
 variable "worker_timeout_seconds" {
   description = "Bounded request timeout for the private worker Cloud Run service."
   type        = number
-  default     = 300
+  default     = 600
 }
 
 variable "worker_concurrency" {
@@ -78,6 +78,12 @@ variable "create_firestore_database" {
   description = "If false, skip google_firestore_database (use when DB already exists)."
   type        = bool
   default     = true
+}
+
+variable "cors_origins" {
+  description = "Comma-separated exact browser origins allowed for CORS (Vercel prod/preview + local Vite). Do not use * with credentials; app sets allow_credentials=false."
+  type        = string
+  default     = "http://127.0.0.1:5173,http://localhost:5173"
 }
 
 variable "name_prefix" {

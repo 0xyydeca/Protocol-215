@@ -20,6 +20,8 @@ __all__ = [
 class FakeProtocolCompiler:
     """Returns hand-built AURORA IRs based on version hint or PDF marker bytes."""
 
+    model_id = "fake-protocol-compiler"
+
     def __init__(self) -> None:
         self.last_result: CompilationResult | None = None
 

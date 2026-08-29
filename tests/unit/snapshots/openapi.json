@@ -128,6 +128,28 @@
       },
       "CreateRunResponse": {
         "properties": {
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
           "event_published": {
             "title": "Event Published",
             "type": "boolean"
@@ -476,6 +498,13 @@
       },
       "RunStatusResponse": {
         "properties": {
+          "actual_adapters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Actual Adapters",
+            "type": "object"
+          },
           "blocked_action_count": {
             "default": 0,
             "title": "Blocked Action Count",
@@ -492,10 +521,32 @@
             ],
             "title": "Checkpoint"
           },
+          "compiler_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compiler Model"
+          },
           "completed_action_count": {
             "default": 0,
             "title": "Completed Action Count",
             "type": "integer"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
           },
           "created_at": {
             "format": "date-time",
@@ -532,6 +583,40 @@
             "title": "From Version",
             "type": "string"
           },
+          "last_checkpoint_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checkpoint At"
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code"
+          },
+          "last_error_detail_safe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Detail Safe"
+          },
           "last_event": {
             "anyOf": [
               {
@@ -542,6 +627,17 @@
               }
             ],
             "title": "Last Event"
+          },
+          "last_worker_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Worker Event Id"
           },
           "pending_approval": {
             "anyOf": [
@@ -578,6 +674,40 @@
           "to_version": {
             "title": "To Version",
             "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "web_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Web Revision"
+          },
+          "worker_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Revision"
           }
         },
         "required": [

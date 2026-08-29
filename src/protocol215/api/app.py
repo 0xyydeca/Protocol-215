@@ -32,12 +32,14 @@ def create_app(settings: Settings | None = None, container: AppContainer | None 
         version="0.1.0",
         lifespan=lifespan,
     )
+    # Browser cookies are not used; keep credentials off. Never pair "*" with credentials.
+    origins = [o for o in cfg.cors_origin_list if o != "*"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cfg.cors_origin_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Idempotency-Key", "X-Correlation-ID"],
     )
     app.add_exception_handler(ApiError, api_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, unhandled_error_handler)
@@ -48,7 +50,8 @@ def create_app(settings: Settings | None = None, container: AppContainer | None 
 
     @app.get("/readyz")
     def readyz(response: Response) -> dict[str, object]:
-        payload = readiness(cfg)
+        container = getattr(app.state, "container", None)
+        payload = readiness(cfg, container=container)
         if payload["status"] != "ok":
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return payload
@@ -66,13 +69,25 @@ def create_app(settings: Settings | None = None, container: AppContainer | None 
         index = assets / "index.html"
         app.mount("/assets", StaticFiles(directory=assets / "assets"), name="assets")
 
+        _SPA_RESERVED = {
+            "healthz",
+            "readyz",
+            "docs",
+            "openapi.json",
+            "redoc",
+        }
+
         @app.get("/")
         def spa_index() -> FileResponse:
             return FileResponse(index)
 
         @app.get("/{full_path:path}")
         def spa_fallback(full_path: str) -> FileResponse:
-            # Do not shadow API/health routes (registered above).
+            head = full_path.split("/", 1)[0]
+            if head in _SPA_RESERVED or full_path.startswith("api/"):
+                from fastapi import HTTPException
+
+                raise HTTPException(status_code=404, detail="Not Found")
             candidate = assets / full_path
             if candidate.is_file():
                 return FileResponse(candidate)

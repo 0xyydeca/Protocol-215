@@ -18,4 +18,8 @@ def build_protocol_compiler(settings: Settings | None = None) -> ProtocolCompile
         project=cfg.google_cloud_project,
         location=cfg.google_cloud_location,
         model=cfg.gemini_model,
+        max_retries=cfg.gemini_max_retries,
+        http_timeout_ms=cfg.gemini_http_timeout_ms,
+        max_output_tokens=cfg.gemini_max_output_tokens,
+        compile_deadline_seconds=cfg.gemini_compile_deadline_seconds,
     )
