@@ -459,8 +459,17 @@ class CloudE2E:
         return payload
 
     def step_revisions_and_health(self) -> tuple[str, str]:
-        code, hz = _http_json("GET", f"{self.web}/healthz", timeout=30)
-        self.mark("healthz", code == 200 and (hz or {}).get("status") == "ok", str(hz)[:120])
+        # Prefer /livez or /api/healthz — some Google frontends return HTML 404 for bare /healthz.
+        hz_ok = False
+        hz_body: Any = None
+        for path in ("/livez", "/api/healthz", "/healthz"):
+            code, hz_body = _http_json("GET", f"{self.web}{path}", timeout=30)
+            if code == 200 and (hz_body or {}).get("status") == "ok":
+                hz_ok = True
+                self.mark("healthz", True, f"via {path}")
+                break
+        if not hz_ok:
+            self.mark("healthz", False, str(hz_body)[:120])
 
         web_meta = _gcloud_json(
             [
