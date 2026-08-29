@@ -71,11 +71,13 @@ echo "==> Building and pushing versioned images"
 bash "${ROOT}/scripts/build_images.sh"
 
 echo "==> Writing terraform.tfvars (local only; gitignored)"
+GEMINI_LOCATION="${GEMINI_LOCATION:-global}"
 cat >"${TF_DIR}/terraform.tfvars" <<EOF
 project_id    = "${PROJECT_ID}"
 region        = "${REGION}"
 bucket_suffix = "${BUCKET_SUFFIX}"
 gemini_model  = "${GEMINI_MODEL}"
+gemini_location = "${GEMINI_LOCATION}"
 web_image_tag = "${IMAGE_TAG}"
 worker_image_tag = "${IMAGE_TAG}"
 max_instances = ${MAX_INSTANCES}

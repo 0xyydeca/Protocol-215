@@ -8,6 +8,7 @@ region       = "us-central1"
 bucket_suffix = "demo-REPLACE_ME" # must yield a globally unique bucket name
 
 gemini_model     = "gemini-3.5-flash"
+gemini_location  = "global"
 web_image_tag    = "dev"
 worker_image_tag = "dev"
 

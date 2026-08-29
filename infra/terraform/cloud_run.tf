@@ -51,7 +51,7 @@ resource "google_cloud_run_v2_service" "web" {
       }
       env {
         name  = "GEMINI_BACKEND"
-        value = "fake"
+        value = "vertex"
       }
       env {
         name  = "GEMINI_MODEL"
@@ -63,7 +63,7 @@ resource "google_cloud_run_v2_service" "web" {
       }
       env {
         name  = "GOOGLE_CLOUD_LOCATION"
-        value = var.region
+        value = var.gemini_location
       }
       env {
         name  = "GCS_BUCKET"
@@ -171,7 +171,7 @@ resource "google_cloud_run_v2_service" "worker" {
       }
       env {
         name  = "GOOGLE_CLOUD_LOCATION"
-        value = var.region
+        value = var.gemini_location
       }
       env {
         name  = "GCS_BUCKET"

@@ -20,6 +20,12 @@ variable "gemini_model" {
   default     = "gemini-3.5-flash"
 }
 
+variable "gemini_location" {
+  description = "Vertex AI / Gemini API location (gemini-3.5-flash typically requires global)."
+  type        = string
+  default     = "global"
+}
+
 variable "web_image_tag" {
   description = "Container image tag for protocol-215-web (e.g. git sha or semver)."
   type        = string

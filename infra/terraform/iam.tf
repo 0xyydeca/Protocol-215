@@ -42,6 +42,13 @@ resource "google_project_iam_member" "web_log_writer" {
   member  = "serviceAccount:${google_service_account.web.email}"
 }
 
+# Web readiness probe calls Vertex when GEMINI_BACKEND=vertex.
+resource "google_project_iam_member" "web_aiplatform_user" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.web.email}"
+}
+
 # --- Worker IAM: GCS, Firestore, Vertex AI, logs ---
 
 resource "google_storage_bucket_iam_member" "worker_object_user" {

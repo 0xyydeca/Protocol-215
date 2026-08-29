@@ -24,8 +24,11 @@ echo "Building images with tag ${IMAGE_TAG}"
 echo "  web:    ${WEB_IMAGE}"
 echo "  worker: ${WORKER_IMAGE}"
 
-docker build -f apps/web/Dockerfile -t "${WEB_IMAGE}" -t "${REGISTRY}/protocol-215-web:latest" .
-docker build -f apps/worker/Dockerfile -t "${WORKER_IMAGE}" -t "${REGISTRY}/protocol-215-worker:latest" .
+PLATFORM="${DOCKER_PLATFORM:-linux/amd64}"
+echo "  platform: ${PLATFORM}"
+
+docker build --platform "${PLATFORM}" -f apps/web/Dockerfile -t "${WEB_IMAGE}" -t "${REGISTRY}/protocol-215-web:latest" .
+docker build --platform "${PLATFORM}" -f apps/worker/Dockerfile -t "${WORKER_IMAGE}" -t "${REGISTRY}/protocol-215-worker:latest" .
 
 if [[ "$PUSH" == "true" ]]; then
   echo "Configuring docker auth for Artifact Registry…"

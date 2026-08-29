@@ -175,6 +175,10 @@ PROJECT_ID=… BUCKET_SUFFIX=… ./scripts/deploy.sh   # types 'yes' to confirm
 
 Destroy: `./scripts/destroy_demo_resources.sh` (type `destroy-protocol-215`).
 
+### Optional: host the UI on Vercel
+
+The React UI can be hosted on Vercel; the API/worker must still run on **Google Cloud Run** (hackathon requirement). See **`docs/VERCEL.md`**. Set `VITE_API_BASE_URL` to the Cloud Run web URL and add the Vercel origin to `CORS_ORIGINS`.
+
 ## 19. Demo reset
 
 ```bash
