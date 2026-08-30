@@ -25,7 +25,12 @@ function jsonResponse(data: unknown, ok = true, status = 200) {
 function mockApiHappyPath() {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url.endsWith("/readyz") || url.endsWith("/healthz")) {
+    if (
+      url.endsWith("/readyz") ||
+      url.endsWith("/healthz") ||
+      url.endsWith("/livez") ||
+      url.endsWith("/api/healthz")
+    ) {
       return jsonResponse({
         status: "ok",
         service: "protocol-215-api",

@@ -26,7 +26,20 @@ export const api = {
   },
 
   async healthz(opts: FetchOpts = {}): Promise<ReadyzResponse> {
-    return apiRequest({ path: "/healthz", signal: opts.signal, timeoutMs: TIMEOUTS.health });
+    // Prefer /livez — some Google Front Ends 404 bare /healthz before it reaches the container.
+    try {
+      return await apiRequest({ path: "/livez", signal: opts.signal, timeoutMs: TIMEOUTS.health });
+    } catch (first) {
+      try {
+        return await apiRequest({
+          path: "/api/healthz",
+          signal: opts.signal,
+          timeoutMs: TIMEOUTS.health,
+        });
+      } catch {
+        throw first;
+      }
+    }
   },
 
   async readyz(opts: FetchOpts = {}): Promise<ReadyzResponse> {

@@ -54,7 +54,7 @@ export function formatNetworkError(err: unknown, diagnostics: RequestDiagnostics
     const origin = diagnostics.apiBaseUrl || "(same-origin)";
     return new ApiError(0, {
       error_code: "network_unreachable",
-      message: `API origin not reachable (${origin}). Check Cloud Run /healthz, CORS, and that VITE_API_BASE_URL points at the API — not Vercel.`,
+      message: `API origin not reachable (${origin}). Check Cloud Run /livez (or /api/healthz), CORS, and that VITE_API_BASE_URL points at the API — not Vercel.`,
       correlation_id: diagnostics.correlationId ?? "unknown",
       retryable: true,
       details: { ...diagnostics, hint: "cors_or_network" },

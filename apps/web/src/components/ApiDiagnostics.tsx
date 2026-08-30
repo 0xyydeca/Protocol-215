@@ -18,7 +18,7 @@ export function ApiDiagnostics({ config, healthOk, healthDetail }: Props) {
         <span>{mode}</span>
         <span className="api-diag-sep">·</span>
         <span data-health={healthOk == null ? "pending" : healthOk ? "ok" : "fail"}>
-          /healthz {healthOk == null ? "…" : healthOk ? "ok" : "failed"}
+          /livez {healthOk == null ? "…" : healthOk ? "ok" : "failed"}
         </span>
       </p>
       {!config.ok && <p className="api-diag-fail">{config.reason}</p>}

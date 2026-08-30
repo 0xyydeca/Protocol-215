@@ -188,7 +188,7 @@ export function LaunchView({
         <div className="state-panel error retryable" role="alert">
           <h3>API not reachable</h3>
           <p>
-            /healthz has not succeeded yet. Upload stays disabled until the Cloud Run API responds.
+            /livez has not succeeded yet. Upload stays disabled until the Cloud Run API responds.
           </p>
         </div>
       )}

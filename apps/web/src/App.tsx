@@ -238,7 +238,7 @@ export default function App() {
         healthDetail={
           !apiConfig.ok
             ? apiConfig.reason
-            : (healthPoll.error?.message ?? (healthOk === false ? "API /healthz failed" : null))
+            : (healthPoll.error?.message ?? (healthOk === false ? "API /livez failed" : null))
         }
       />
 

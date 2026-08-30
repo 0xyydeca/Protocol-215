@@ -73,6 +73,12 @@ async function installFakeBackend(page: import("@playwright/test").Page) {
   await page.route("**/healthz", async (route) => {
     await route.fulfill({ json: { status: "ok", service: "protocol-215-api" } });
   });
+  await page.route("**/livez", async (route) => {
+    await route.fulfill({ json: { status: "ok", service: "protocol-215-api" } });
+  });
+  await page.route("**/api/healthz", async (route) => {
+    await route.fulfill({ json: { status: "ok", service: "protocol-215-api" } });
+  });
   await page.route("**/api/runs", async (route) => {
     if (route.request().method() === "POST") {
       await route.fulfill({
