@@ -75,6 +75,20 @@ resource "google_project_iam_member" "worker_log_writer" {
   member  = "serviceAccount:${google_service_account.worker.email}"
 }
 
+# Worker /readyz probes topic metadata (pubsub.topics.get). Viewer is least-privilege.
+resource "google_pubsub_topic_iam_member" "worker_events_viewer" {
+  topic  = google_pubsub_topic.events.name
+  role   = "roles/pubsub.viewer"
+  member = "serviceAccount:${google_service_account.worker.email}"
+}
+
+# Worker may publish follow-up domain events (e.g. progress) onto the same topic.
+resource "google_pubsub_topic_iam_member" "worker_events_publisher" {
+  topic  = google_pubsub_topic.events.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${google_service_account.worker.email}"
+}
+
 # --- Pub/Sub invoker: run.invoker on worker only (bound in cloud_run.tf) ---
 
 # Allow Pub/Sub service agent to mint OIDC tokens as the invoker SA.
