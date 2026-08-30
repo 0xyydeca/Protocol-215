@@ -540,6 +540,15 @@ select:focus-visible,
   padding: 0.15rem 0.4rem;
 }
 
+.timeline-stat {
+  margin: 0.35rem 0 0.55rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, #fff);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
 .kind-release {
   background: #d7e8f2;
 }
@@ -556,11 +565,62 @@ select:focus-visible,
   background: #e8e0f2;
 }
 .kind-version {
-  background: #e4e8eb;
+  background: #cfd8de;
+  font-weight: 700;
+}
+.tl-event.kind-version.is-v1 {
+  background: #d8e0e6;
+  color: #243040;
+}
+.tl-event.kind-version.is-v2 {
+  background: #5f8498;
+  color: #fff;
 }
 .kind-blocked {
-  background: #f2d6d9;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f2d6d9,
+    #f2d6d9 4px,
+    #e8b4ba 4px,
+    #e8b4ba 8px
+  );
   color: var(--block);
+  border-color: color-mix(in srgb, var(--block) 40%, transparent);
+}
+
+.timeline-marker-rail {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.timeline-marker-track {
+  position: relative;
+  height: 2.4rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 4.5rem;
+}
+
+.timeline-marker-line {
+  display: block;
+  width: 1px;
+  height: 0.55rem;
+  margin: 0 auto;
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.timeline-marker-label {
+  display: block;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  color: var(--muted);
 }
 
 .timeline-rows {
@@ -587,17 +647,49 @@ select:focus-visible,
   font-size: 0.75rem;
 }
 
+.timeline-site-flip {
+  color: var(--ink) !important;
+  font-weight: 600;
+  font-size: 0.72rem !important;
+}
+
 .timeline-track {
   position: relative;
-  min-height: 4.5rem;
+  min-height: 6.5rem;
   background: #fff;
   border: 1px solid var(--line);
   overflow: hidden;
+  padding-bottom: 1.15rem;
+}
+
+.timeline-lanes {
+  display: grid;
+  grid-template-rows: auto;
+  gap: 0.2rem;
+  padding: 0.4rem 0.35rem 0;
+  min-height: 5.2rem;
+}
+
+.timeline-lane {
+  position: relative;
+  height: 1.35rem;
+}
+
+.timeline-lane.lane-version {
+  height: 1.45rem;
+}
+
+.timeline-lane.lane-block {
+  height: 1.2rem;
+}
+
+.timeline-lane.lane-visit {
+  height: 1.15rem;
 }
 
 .timeline-track .axis {
   position: absolute;
-  inset: auto 0.4rem 0.15rem;
+  inset: auto 0.4rem 0.12rem;
   display: flex;
   justify-content: space-between;
   font-size: 0.65rem;
@@ -606,15 +698,24 @@ select:focus-visible,
 
 .tl-event {
   position: absolute;
-  top: 0.45rem;
-  height: 1.7rem;
+  top: 0;
+  height: 100%;
   border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   cursor: pointer;
   text-align: left;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+}
+
+.tl-event span {
+  padding: 0 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timeline-detail {
@@ -1062,10 +1163,40 @@ select:focus-visible,
       90deg,
       transparent,
       transparent calc(100% / 215 * 30 - 1px),
-      color-mix(in srgb, var(--line) 70%, transparent) calc(100% / 215 * 30 - 1px),
-      color-mix(in srgb, var(--line) 70%, transparent) calc(100% / 215 * 30)
+      color-mix(in srgb, var(--line) 55%, transparent) calc(100% / 215 * 30 - 1px),
+      color-mix(in srgb, var(--line) 55%, transparent) calc(100% / 215 * 30)
     ),
     #fff;
+}
+
+/* Vertical guides at Phoenix / Boston / Seattle flip days */
+.timeline-track::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      transparent calc(100% * 30 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 30 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 30 / 215 + 0.5px),
+      transparent calc(100% * 30 / 215 + 0.5px)
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(100% * 95 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 95 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 95 / 215 + 0.5px),
+      transparent calc(100% * 95 / 215 + 0.5px)
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(100% * 180 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 180 / 215 - 0.5px),
+      color-mix(in srgb, var(--accent) 45%, transparent) calc(100% * 180 / 215 + 0.5px),
+      transparent calc(100% * 180 / 215 + 0.5px)
+    );
 }
 
 .approval-panel {
