@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
 
 from google.adk.runners import Runner
 from google.genai import types
@@ -30,6 +32,8 @@ from protocol215.workflow.runtime import WorkflowRuntime, clear_runtime, registe
 
 logger = logging.getLogger("protocol215.cloud.driver")
 
+_T = TypeVar("_T")
+
 _TERMINAL_OR_PAUSE = {
     WorkflowStatus.AWAITING_APPROVAL,
     WorkflowStatus.COMPLETED,
@@ -38,6 +42,21 @@ _TERMINAL_OR_PAUSE = {
     WorkflowStatus.FAILED_TERMINAL,
     WorkflowStatus.FAILED,
 }
+
+
+def _run_coro(factory: Callable[[], Awaitable[_T]]) -> _T:
+    """Run an async coroutine from sync code, including under a running event loop.
+
+    Cloud Run workers use FastAPI/uvicorn, so ``asyncio.run`` inside the request
+    handler fails with "cannot be called from a running event loop". When a loop
+    is already running, execute ``asyncio.run`` in a dedicated worker thread.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(factory())
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(lambda: asyncio.run(factory())).result()
 
 
 @dataclass
@@ -117,10 +136,10 @@ class CloudWorkflowDriver:
         return self._runner
 
     def start(self, envelope: EventEnvelope) -> WorkflowStatus:
-        return asyncio.run(self.start_async(envelope))
+        return _run_coro(lambda: self.start_async(envelope))
 
     def resume(self, envelope: EventEnvelope) -> WorkflowStatus:
-        return asyncio.run(self.resume_async(envelope))
+        return _run_coro(lambda: self.resume_async(envelope))
 
     async def start_async(self, envelope: EventEnvelope) -> WorkflowStatus:
         run = self.state.get_run(envelope.run_id)

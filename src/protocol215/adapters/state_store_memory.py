@@ -151,6 +151,9 @@ class InMemoryStateStore:
         self.processed_events[idempotency_key] = event_id
         return True
 
+    def clear_processed_event(self, idempotency_key: str) -> None:
+        self.processed_events.pop(idempotency_key, None)
+
     def snapshot(self) -> dict[str, object]:
         return deepcopy(
             {

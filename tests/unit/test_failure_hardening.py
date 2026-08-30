@@ -121,6 +121,48 @@ def test_01_duplicate_amendment_received_delivery() -> None:
     assert starts["n"] == 1
 
 
+def test_01b_retryable_failure_releases_processed_claim() -> None:
+    """Retryable workflow failure must not poison Pub/Sub redelivery."""
+    from protocol215.cloud.errors import RetryableWorkerError
+
+    store = InMemoryStateStore()
+    store.save_run(
+        WorkflowRun(
+            run_id="run-retry-r",
+            study_id="AURORA-101",
+            from_version="1.0",
+            to_version="2.0",
+            status=WorkflowStatus.CREATED,
+        )
+    )
+    starts = {"n": 0}
+
+    class Runner:
+        def start(self, envelope: EventEnvelope) -> WorkflowStatus:
+            starts["n"] += 1
+            if starts["n"] == 1:
+                raise RuntimeError("asyncio.run() cannot be called from a running event loop")
+            return WorkflowStatus.AWAITING_APPROVAL
+
+        def resume(self, envelope: EventEnvelope) -> WorkflowStatus:
+            return WorkflowStatus.COMPLETED
+
+    handler = AmendmentWorkerHandler(state=store, runner=Runner())
+    env = EventEnvelope(
+        event_id="evt-retry-1",
+        event_type=AmendmentEventType.RECEIVED,
+        run_id="run-retry-r",
+        correlation_id="c1",
+    )
+    with pytest.raises(RetryableWorkerError, match="asyncio.run"):
+        handler.handle(env)
+    assert starts["n"] == 1
+    second = handler.handle(env)
+    assert second.duplicate is False
+    assert second.status == WorkflowStatus.AWAITING_APPROVAL
+    assert starts["n"] == 2
+
+
 def test_02_duplicate_amendment_resume_delivery() -> None:
     driver = LocalWorkflowDriver(include_amber=True)
     started = _run(driver.start())

@@ -31,6 +31,9 @@ class _DocRef:
         _ = transaction
         return _Snap(self._store._docs.get(self.path))
 
+    def delete(self) -> None:
+        self._store._docs.pop(self.path, None)
+
 
 class _Query:
     def __init__(self, store: FakeFirestore, collection: str, field: str, value: Any) -> None:

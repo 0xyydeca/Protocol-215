@@ -392,3 +392,6 @@ class FirestoreStateStore:
             return True
 
         return bool(_txn(self._db.transaction()))
+
+    def clear_processed_event(self, idempotency_key: str) -> None:
+        self._db.collection("processed_events").document(idempotency_key).delete()

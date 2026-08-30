@@ -106,6 +106,10 @@ class StateStore(Protocol):
         """Return True if newly recorded, False if already processed."""
         ...
 
+    def clear_processed_event(self, idempotency_key: str) -> None:
+        """Drop a processed-event claim so Pub/Sub redelivery can retry after failure."""
+        ...
+
 
 @runtime_checkable
 class EventBus(Protocol):

@@ -109,10 +109,13 @@ class AmendmentWorkerHandler:
                         dead_letter_reason="unsupported_event_type",
                     )
             except RetryableWorkerError:
+                # Release claim so Pub/Sub redelivery can retry the same event_id.
+                self.state.clear_processed_event(idem)
                 raise
             except TerminalWorkerError:
                 raise
             except Exception as exc:  # noqa: BLE001
+                self.state.clear_processed_event(idem)
                 raise RetryableWorkerError(
                     f"workflow failed: {exc}",
                     correlation_id=envelope.correlation_id,
@@ -122,6 +125,7 @@ class AmendmentWorkerHandler:
                 self.persist_audit(envelope, status, "ok")
 
             if status == WorkflowStatus.FAILED_RETRYABLE:
+                self.state.clear_processed_event(idem)
                 raise RetryableWorkerError(
                     f"workflow retryable failure: {status.value}",
                     correlation_id=envelope.correlation_id,

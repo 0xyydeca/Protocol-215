@@ -362,6 +362,13 @@ class SQLiteStateStore:
         except sqlite3.IntegrityError:
             return False
 
+    def clear_processed_event(self, idempotency_key: str) -> None:
+        with self.transaction():
+            self._conn.execute(
+                "DELETE FROM processed_events WHERE idempotency_key = ?",
+                (idempotency_key,),
+            )
+
     def execute_action_transaction(
         self,
         *,
