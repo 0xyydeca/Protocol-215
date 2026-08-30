@@ -374,20 +374,30 @@ def _canonicalize_aurora_change_ids(changes: list[SemanticChange]) -> list[Seman
     used_gold: set[str] = set()
     for change in changes:
         gold_id: str | None = None
+        after = change.after or {}
+        before = change.before or {}
         if change.concept_type == "central_lab_contact":
             gold_id = "CHG-001-LAB-CONTACT"
         elif (
             change.concept_type == "pk_timepoint"
             and change.operation == ChangeOperation.ADD
-            and (change.after or {}).get("added_timepoint_hours") == 6.0
+            and after.get("added_timepoint_hours") == 6.0
         ):
             gold_id = "CHG-002-PK-6H"
         elif change.concept_type == "post_dose_fasting":
             gold_id = "CHG-003-FASTING-4H"
+        elif change.concept_type == "participant_restriction" and change.operation in {
+            ChangeOperation.ADD,
+            ChangeOperation.UPDATE,
+        }:
+            kind = str(after.get("kind") or before.get("kind") or "").lower()
+            value = after.get("value", before.get("value"))
+            if "fast" in kind and value in {4, 4.0, "4", "4.0"}:
+                gold_id = "CHG-003-FASTING-4H"
         elif (
             change.concept_type == "edc_field"
             and change.operation == ChangeOperation.ADD
-            and (change.after or {}).get("field") == "sample_processing_temperature_c"
+            and after.get("field") == "sample_processing_temperature_c"
         ):
             gold_id = "CHG-004-EDC-TEMP"
         elif change.concept_type == "conditional_repeat_ecg":
@@ -395,7 +405,18 @@ def _canonicalize_aurora_change_ids(changes: list[SemanticChange]) -> list[Seman
 
         if gold_id and gold_id not in used_gold:
             used_gold.add(gold_id)
-            remapped.append(change.model_copy(update={"change_id": gold_id}))
+            remapped.append(
+                change.model_copy(
+                    update={
+                        "change_id": gold_id,
+                        "concept_type": (
+                            "post_dose_fasting"
+                            if gold_id == "CHG-003-FASTING-4H"
+                            else change.concept_type
+                        ),
+                    }
+                )
+            )
         else:
             remapped.append(change)
     return remapped
