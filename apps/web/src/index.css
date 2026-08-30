@@ -455,15 +455,23 @@ select:focus-visible,
 
 .impact-layout {
   display: grid;
-  grid-template-columns: 1fr 16rem;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
   gap: 1rem;
+  align-items: start;
+}
+
+.impact-canvas {
+  overflow: auto;
+  max-height: min(72vh, 780px);
+  background: #fff;
+  border: 1px solid var(--line);
 }
 
 .impact-svg {
-  width: 100%;
+  display: block;
+  width: max(100%, 960px);
   height: auto;
   background: #fff;
-  border: 1px solid var(--line);
 }
 
 .layer-title {
@@ -500,8 +508,23 @@ select:focus-visible,
 
 .impact-detail {
   border: 1px solid var(--line);
-  padding: 0.75rem;
+  padding: 0.75rem 0.85rem;
   background: #fff;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.impact-detail .impact-kv > div {
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  align-items: start;
+}
+
+.impact-detail .impact-kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .timeline-legend {
