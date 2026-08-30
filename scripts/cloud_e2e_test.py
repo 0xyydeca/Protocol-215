@@ -172,11 +172,31 @@ def _gcloud_text(args: list[str]) -> str:
 
 
 def _fetch_id_token(audience: str) -> str:
-    import google.auth.transport.requests
-    import google.oauth2.id_token
+    """ID token for private Cloud Run. Prefer ADC; fall back to gcloud user creds."""
+    try:
+        import google.auth.transport.requests
+        import google.oauth2.id_token
 
-    auth_req = google.auth.transport.requests.Request()
-    return google.oauth2.id_token.fetch_id_token(auth_req, audience)  # type: ignore[no-untyped-call]
+        auth_req = google.auth.transport.requests.Request()
+        return google.oauth2.id_token.fetch_id_token(auth_req, audience)  # type: ignore[no-untyped-call]
+    except Exception:
+        proc = subprocess.run(
+            [
+                "gcloud",
+                "auth",
+                "print-identity-token",
+                f"--audiences={audience}",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        token = (proc.stdout or "").strip()
+        if proc.returncode != 0 or not token:
+            raise RuntimeError(
+                f"cannot mint ID token for {audience}: {proc.stderr.strip() or proc.stdout}"
+            ) from None
+        return token
 
 
 def _is_gemini_3_5_plus(model: str) -> bool:
