@@ -69,10 +69,12 @@ export function FindingsView({ findings, loading, error, onRetry }: Props) {
           <article key={f.finding_id} className="finding-card">
             <div className="finding-head">
               <span className={`badge ${f.severity}`}>{f.severity}</span>
-              <code>{f.code}</code>
+              <code className="finding-code" title={f.code}>
+                {f.code}
+              </code>
             </div>
-            <p>{f.summary}</p>
-            <p className="muted">
+            <p className="finding-card-summary">{f.summary}</p>
+            <p className="muted finding-scope">
               {[f.site_id, f.participant_id].filter(Boolean).join(" · ") || "Study-wide"}
             </p>
           </article>
