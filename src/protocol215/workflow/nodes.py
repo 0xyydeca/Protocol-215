@@ -447,6 +447,52 @@ async def human_approval(ctx: Any) -> Any:
             )
             return
 
+        # Cloud path: web API records APPROVED/REJECTED then publishes amendment.resume.
+        # Treat that as the authoritative decision — do not re-validate as "already submitted".
+        if request.status in {ApprovalStatus.APPROVED, ApprovalStatus.REJECTED}:
+            was_approved = request.status == ApprovalStatus.APPROVED
+            if bool(resp.approved) != was_approved:
+                raise WorkflowFailure(
+                    "resume decision mismatches API-recorded approval",
+                    failure_class=FailureClass.STALE_APPROVAL,
+                )
+            run = rt.run()
+            if run.status not in {
+                WorkflowStatus.AWAITING_APPROVAL,
+                WorkflowStatus.RESUMING,
+            }:
+                raise WorkflowFailure(
+                    f"run is no longer awaiting approval (status={run.status.value})",
+                    failure_class=FailureClass.STALE_APPROVAL,
+                )
+            if (
+                resp.state_version is not None
+                and resp.state_version != request.expected_state_version
+            ):
+                raise WorkflowFailure(
+                    "expected state version mismatch",
+                    failure_class=FailureClass.STALE_APPROVAL,
+                )
+            rt.set_status(WorkflowStatus.RESUMING, checkpoint="HumanApproval")
+            rt.state.save_approval_request(
+                request.model_copy(update={"status": ApprovalStatus.CONSUMED})
+            )
+            rt.append_event("HumanApproval")
+            rt.mark_node_complete("HumanApproval")
+            yield Event(  # type: ignore[call-arg]
+                output={
+                    "approved": was_approved,
+                    "approval_id": request.approval_id,
+                    "comment": resp.comment,
+                    "action_id": request.action_id,
+                    "affected_participant": request.affected_participant_id,
+                    "affected_site": request.affected_site_id,
+                    "api_pre_recorded": True,
+                },
+                route="approved" if was_approved else "rejected",
+            )
+            return
+
         rt.set_status(WorkflowStatus.RESUMING, checkpoint="HumanApproval")
         primary = next(
             (p for p in rt.proposals if p.proposal_id == request.action_id),

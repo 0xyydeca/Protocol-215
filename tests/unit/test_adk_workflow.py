@@ -51,6 +51,25 @@ def test_path_with_one_approval() -> None:
     assert all(a.executed and a.approved for a in amber)
 
 
+def test_cloud_api_pre_recorded_approval_then_resume() -> None:
+    """Web records APPROVED before Pub/Sub resume — must not fail as stale."""
+    from protocol215.domain.enums import ApprovalStatus
+
+    driver = LocalWorkflowDriver(include_amber=True)
+    started = _run(driver.start())
+    assert started.pause is not None and started.pause.approval_id
+    driver.service.record_approval(
+        approval_id=started.pause.approval_id,
+        decision=ApprovalStatus.APPROVED,
+        actor="synthetic_operator",
+    )
+    resumed = _run(driver.resume(run_id=started.run.run_id, approved=True))
+    assert resumed.paused is False
+    assert resumed.run.status == WorkflowStatus.COMPLETED
+    assert "HumanApproval" in resumed.events
+    assert "ApprovedActionExecutor" in resumed.events
+
+
 def test_rejection_path() -> None:
     driver = LocalWorkflowDriver(include_amber=True)
     started = _run(driver.start())
