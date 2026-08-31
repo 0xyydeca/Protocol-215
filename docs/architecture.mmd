@@ -1,20 +1,70 @@
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8eef1', 'primaryTextColor': '#0b1f2a', 'primaryBorderColor': '#1a5f7a', 'lineColor': '#4d606c', 'fontFamily': 'IBM Plex Sans'}}}%%
-flowchart LR
-  Upload["Upload<br/>v1 + v2 PDFs"] --> GCS["Cloud Storage<br/>private objects"]
-  GCS --> PubSub["Pub/Sub<br/>amendment.received"]
-  PubSub --> Worker["Cloud Run<br/>ADK worker"]
-  Worker --> Gemini["Gemini<br/>tool-less IR"]
-  Gemini --> Twin["Trial Twin<br/>sites · participants"]
-  Twin --> Policy["Policy gate<br/>GREEN / AMBER / RED"]
-  Policy --> Tools["Firestore tools<br/>idempotent GREEN"]
-  Tools --> Approve["Human approval<br/>web UI"]
-  Approve --> Resume["Pub/Sub<br/>amendment.resume"]
-  Resume --> Inv["Invariants"]
-  Inv --> Manifest["Release Manifest"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8eef1', 'primaryTextColor': '#0b1f2a', 'primaryBorderColor': '#1a5f7a', 'lineColor': '#4d606c', 'fontFamily': 'IBM Plex Sans, system-ui, sans-serif', 'fontSize': '14px'}}}%%
+flowchart TB
+  subgraph UI["Operator · Taskmaster async workflow"]
+    Upload["Upload v1 + v2 PDFs<br/>(web UI)"]
+  end
 
-  classDef cloud fill:#dbe7f0,stroke:#1a5f7a,color:#0b1f2a;
-  classDef human fill:#f5edd8,stroke:#9a5b00,color:#0b1f2a;
-  classDef safe fill:#dceee6,stroke:#1d6b4f,color:#0b1f2a;
-  class GCS,PubSub,Worker,Gemini,Tools,Resume cloud
-  class Approve human
-  class Inv,Manifest safe
+  subgraph GCP["Google Cloud infrastructure"]
+    Web["Cloud Run · protocol-215-web<br/>FastAPI + React"]
+    GCS["Cloud Storage<br/>GCSObjectStore"]
+    FS["Firestore<br/>FirestoreStateStore"]
+    PS["Pub/Sub · protocol-215-events<br/>amendment.received / .resume"]
+    Worker["Cloud Run · protocol-215-worker<br/>(private · Pub/Sub push)"]
+    Log["Cloud Logging"]
+  end
+
+  subgraph ADK["Google ADK 2.x · orchestration"]
+    Graph["Resumable workflow graph<br/>pause · checkpoint · resume"]
+  end
+
+  subgraph Model["Vertex AI · model-assisted extraction only"]
+    Gemini["Gemini 3.5 Flash<br/>tool-less Protocol IR"]
+  end
+
+  subgraph Det["Deterministic authority boundary · Python"]
+    Diff["Semantic diff"]
+    Impact["Impact graph"]
+    Twin["Trial Twin rehearsal"]
+    Plan["Allowlisted action proposals<br/>FakeActionPlanner"]
+    Policy["GREEN / AMBER / RED gate"]
+    Tools["Idempotent tools + audit hash chain"]
+    Inv["Invariants"]
+    Manifest["Amendment Release Manifest"]
+  end
+
+  subgraph Human["Human approval · not a stall"]
+    Approve["AMBER approval<br/>web Action Ledger"]
+  end
+
+  Upload --> Web
+  Web --> GCS
+  Web --> FS
+  Web -->|"publish start"| PS
+  PS --> Worker
+  Worker --> Graph
+  Graph --> Gemini
+  Gemini --> Diff
+  Diff --> Impact --> Twin --> Plan --> Policy
+  Policy -->|"GREEN auto-execute"| Tools
+  Policy -->|"AMBER pause"| Approve
+  Tools --> FS
+  Approve -->|"record + publish resume"| PS
+  PS -->|"new consumption"| Worker
+  Worker --> Tools
+  Tools --> Inv --> Manifest
+  Worker --> FS
+  Worker --> GCS
+  Worker --> Log
+  Web --> FS
+
+  classDef cloud fill:#dbe7f0,stroke:#1a5f7a,color:#0b1f2a,stroke-width:2px;
+  classDef human fill:#f5edd8,stroke:#9a5b00,color:#0b1f2a,stroke-width:2px;
+  classDef det fill:#dceee6,stroke:#1d6b4f,color:#0b1f2a,stroke-width:2px;
+  classDef model fill:#f0e6f5,stroke:#6b3fa0,color:#0b1f2a,stroke-width:2px;
+  classDef adk fill:#e6eef8,stroke:#2c5282,color:#0b1f2a,stroke-width:2px;
+
+  class Web,GCS,FS,PS,Worker,Log cloud;
+  class Approve human;
+  class Diff,Impact,Twin,Plan,Policy,Tools,Inv,Manifest det;
+  class Gemini model;
+  class Graph adk;

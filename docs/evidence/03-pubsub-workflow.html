@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<style>
+  body { font-family: "Google Sans", "Segoe UI", system-ui, sans-serif; background:#f6f8fb; margin:0; padding:24px; color:#202124; }
+  .card { background:#fff; border:1px solid #dadce0; border-radius:8px; max-width:1100px; margin:0 auto; box-shadow:0 1px 3px rgba(60,64,67,.15); }
+  .hdr { background:#1a73e8; color:#fff; padding:16px 20px; border-radius:8px 8px 0 0; }
+  .hdr h1 { margin:0; font-size:18px; font-weight:500; }
+  .hdr p { margin:6px 0 0; font-size:12px; opacity:.9; }
+  .body { padding:20px; font-size:13px; line-height:1.45; }
+  pre { background:#f1f3f4; border:1px solid #e0e0e0; border-radius:4px; padding:12px; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+  table { border-collapse:collapse; width:100%; }
+  td, th { border:1px solid #dadce0; padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#f8f9fa; width:220px; }
+  .ok { color:#137333; font-weight:600; }
+  .note { color:#5f6368; font-size:12px; margin-top:12px; }
+</style></head><body>
+<div class="card"><div class="hdr"><h1>Pub/Sub — events + worker push</h1><p>project=protocol-215-demo</p></div>
+<div class="body"><h3>Topics</h3><pre>projects/protocol-215-demo/topics/protocol-215-events
+projects/protocol-215-demo/topics/protocol-215-dead-letter</pre><h3>Subscriptions</h3><pre>NAME                                                                    TOPIC                                                       PUSH_ENDPOINT
+projects/protocol-215-demo/subscriptions/protocol-215-worker-push       projects/protocol-215-demo/topics/protocol-215-events       https://protocol-215-worker-u6nfupvmhq-uc.a.run.app/pubsub/push
+projects/protocol-215-demo/subscriptions/protocol-215-dead-letter-pull  projects/protocol-215-demo/topics/protocol-215-dead-letter</pre><p class='note'>Message payloads not shown — delivery inferred from processed_events and worker checkpoint progress.</p></div></div></body></html>

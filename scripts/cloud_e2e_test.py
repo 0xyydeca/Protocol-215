@@ -244,17 +244,13 @@ def _print_failure(exc: E2EError) -> None:
     print("===================================\n")
 
 
-def _write_results_md(payload: dict[str, Any]) -> None:
+def _format_e2e_section(payload: dict[str, Any], *, heading: str) -> list[str]:
     lines = [
-        "# Cloud E2E Results",
+        heading,
         "",
-        f"_Last updated: {payload.get('completed_at')} (UTC)_",
-        "",
-        "## Verdict",
+        f"_Recorded: {payload.get('completed_at')} (UTC)_",
         "",
         f"**{payload.get('result')}**",
-        "",
-        "## Evidence",
         "",
         "| Field | Value |",
         "| --- | --- |",
@@ -270,24 +266,110 @@ def _write_results_md(payload: dict[str, Any]) -> None:
         f"| invocation_id | `{payload.get('invocation_id')}` |",
         f"| elapsed_seconds | {payload.get('elapsed_seconds')} |",
         "",
-        "## Adapter honesty",
+        "### Adapter honesty",
         "",
         "```json",
         json.dumps(payload.get("actual_adapters") or {}, indent=2),
         "```",
         "",
-        "## Checkpoint path observed",
+        "### Checkpoint path observed",
         "",
         "```",
         " → ".join(payload.get("checkpoints_seen") or []),
         "```",
         "",
-        "## Assertions",
+        "### Assertions",
         "",
     ]
     for name, ok in (payload.get("assertions") or {}).items():
         lines.append(f"- [{'x' if ok else ' '}] {name}")
     lines.append("")
+    return lines
+
+
+def _parse_historical_e2e_sections(existing: str) -> list[str]:
+    marker = "## Historical E2E runs"
+    if marker not in existing:
+        return []
+    tail = existing.split(marker, 1)[1]
+    blocks: list[str] = []
+    for part in tail.split("\n## E2E run "):
+        part = part.strip()
+        if not part:
+            continue
+        if part.startswith("("):
+            blocks.append("## E2E run " + part)
+        elif not part.startswith("## E2E run "):
+            blocks.append("## E2E run " + part)
+        else:
+            blocks.append(part if part.startswith("##") else "## E2E run " + part)
+    return blocks
+
+
+def _write_results_md(payload: dict[str, Any]) -> None:
+    prior = RESULTS_MD.read_text(encoding="utf-8") if RESULTS_MD.exists() else ""
+    historical: list[str] = []
+    if prior.strip():
+        if "## Final release E2E" in prior:
+            old_final = prior.split("## Historical E2E runs", 1)[0]
+            archived = old_final.split("## Final release E2E", 1)[1].strip()
+            if archived:
+                historical.append("## E2E run (archived)\n\n" + archived)
+        elif "## Verdict" in prior or "## Evidence" in prior:
+            # Legacy single-block report — archive whole body after title.
+            body = prior.split("\n", 1)[1].strip() if prior.startswith("# Cloud E2E") else prior.strip()
+            historical.append("## E2E run (archived — pre-release layout)\n\n" + body)
+        historical.extend(_parse_historical_e2e_sections(prior))
+
+    lines = [
+        "# Cloud E2E Results",
+        "",
+        f"_Last updated: {payload.get('completed_at')} (UTC)_",
+        "",
+        "Automated acceptance for the hosted Google Cloud demo. The **Final release E2E** "
+        "section is the authoritative PASS for the current submission commit and revisions.",
+        "",
+        "## Final release E2E",
+        "",
+        f"**{payload.get('result')}**",
+        "",
+        "| Field | Value |",
+        "| --- | --- |",
+        f"| commit_sha | `{payload.get('commit_sha')}` |",
+        f"| web_url | `{payload.get('web_url')}` |",
+        f"| web_revision | `{payload.get('web_revision')}` |",
+        f"| worker_revision | `{payload.get('worker_revision')}` |",
+        f"| gemini_model | `{payload.get('gemini_model')}` |",
+        f"| run_id | `{payload.get('run_id')}` |",
+        f"| correlation_id | `{payload.get('correlation_id')}` |",
+        f"| start_event_id | `{payload.get('start_event_id')}` |",
+        f"| session_id | `{payload.get('session_id')}` |",
+        f"| invocation_id | `{payload.get('invocation_id')}` |",
+        f"| elapsed_seconds | {payload.get('elapsed_seconds')} |",
+        "",
+        "### Adapter honesty",
+        "",
+        "```json",
+        json.dumps(payload.get("actual_adapters") or {}, indent=2),
+        "```",
+        "",
+        "### Checkpoint path observed",
+        "",
+        "```",
+        " → ".join(payload.get("checkpoints_seen") or []),
+        "```",
+        "",
+        "### Assertions",
+        "",
+    ]
+    for name, ok in (payload.get("assertions") or {}).items():
+        lines.append(f"- [{'x' if ok else ' '}] {name}")
+    lines.append("")
+    if historical:
+        lines.extend(["## Historical E2E runs", ""])
+        lines.extend(historical)
+        if not lines[-1].endswith("\n"):
+            lines.append("")
     RESULTS_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

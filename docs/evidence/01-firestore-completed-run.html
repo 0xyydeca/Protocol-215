@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<style>
+  body { font-family: "Google Sans", "Segoe UI", system-ui, sans-serif; background:#f6f8fb; margin:0; padding:24px; color:#202124; }
+  .card { background:#fff; border:1px solid #dadce0; border-radius:8px; max-width:1100px; margin:0 auto; box-shadow:0 1px 3px rgba(60,64,67,.15); }
+  .hdr { background:#1a73e8; color:#fff; padding:16px 20px; border-radius:8px 8px 0 0; }
+  .hdr h1 { margin:0; font-size:18px; font-weight:500; }
+  .hdr p { margin:6px 0 0; font-size:12px; opacity:.9; }
+  .body { padding:20px; font-size:13px; line-height:1.45; }
+  pre { background:#f1f3f4; border:1px solid #e0e0e0; border-radius:4px; padding:12px; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+  table { border-collapse:collapse; width:100%; }
+  td, th { border:1px solid #dadce0; padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#f8f9fa; width:220px; }
+  .ok { color:#137333; font-weight:600; }
+  .note { color:#5f6368; font-size:12px; margin-top:12px; }
+</style></head><body>
+<div class="card"><div class="hdr"><h1>Firestore — completed run</h1><p>project=protocol-215-demo · captured 2026-08-31 04:28 UTC</p></div>
+<div class="body"><table><tr><th>Document path</th><td><pre>runs/run-43534f6f-af0a-4e46-8757-d52c91aec564</pre></td></tr><tr><th>status</th><td><pre>COMPLETED</pre></td></tr><tr><th>checkpoint</th><td><pre>CompleteRun</pre></td></tr><tr><th>compiler_model</th><td><pre>gemini-3.5-flash</pre></td></tr><tr><th>worker_revision</th><td><pre>protocol-215-worker-00012-zvc</pre></td></tr><tr><th>state_version</th><td><pre>13</pre></td></tr><tr><th>event_sequence</th><td><pre>[
+  &quot;IntakeValidator&quot;,
+  &quot;RegisterArtifacts&quot;,
+  &quot;CompileOldProtocol&quot;,
+  &quot;CompileNewProtocol&quot;,
+  &quot;SemanticDiff&quot;,
+  &quot;ImpactGraphBuilder&quot;,
+  &quot;TrialTwinSimulator&quot;,
+  &quot;ActionPlanner&quot;,
+  &quot;PolicyGate&quot;,
+  &quot;SafeActionExecutor&quot;,
+  &quot;ApprovalRouter&quot;,
+  &quot;HumanApproval&quot;,
+  &quot;ApprovedActionExecutor&quot;,
+  &quot;InvariantVerifier&quot;,
+  &quot;ManifestGenerator&quot;,
+  &quot;CompleteRun&quot;
+]</pre></td></tr></table><h3>processed_events (same run)</h3><table><tr><th>Document ID</th><th>event_id</th></tr><tr><td><pre>run-43534f6f-af0a-4e46-8757-d52c91aec564:amendment.received:AURORA-101:9b00247cb4206fe86c91327ab6a89ff68df691b08e955087d122998f8325724d:42245a5d02fa844ea239bba930c6230580c9a3f7c30e29213f8fec434ce78e83</pre></td><td><pre>evt-c13a2077-a19e-4e48-9f93-f7c7c89f54f8</pre></td></tr><tr><td><pre>run-43534f6f-af0a-4e46-8757-d52c91aec564:amendment.received:evt-c13a2077-a19e-4e48-9f93-f7c7c89f54f8</pre></td><td><pre>evt-c13a2077-a19e-4e48-9f93-f7c7c89f54f8</pre></td></tr><tr><td><pre>run-43534f6f-af0a-4e46-8757-d52c91aec564:amendment.resume:apr-b16b8043-7400-4eb4-803c-f1c5be0265c7:approved</pre></td><td><pre>evt-f5ee4f91-4652-44b5-b7ae-3660aeb225f7</pre></td></tr><tr><td><pre>run-43534f6f-af0a-4e46-8757-d52c91aec564:amendment.resume:evt-f5ee4f91-4652-44b5-b7ae-3660aeb225f7</pre></td><td><pre>evt-f5ee4f91-4652-44b5-b7ae-3660aeb225f7</pre></td></tr></table></div></div></body></html>

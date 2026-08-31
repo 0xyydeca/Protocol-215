@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-08-31 04:28 UTC",
+  "video_run_id": "run-43534f6f-af0a-4e46-8757-d52c91aec564",
+  "web_revision": "protocol-215-web-00014-vjz",
+  "worker_revision": "protocol-215-worker-00012-zvc",
+  "gemini_model": "gemini-3.5-flash",
+  "web_url": "https://protocol-215-web-u6nfupvmhq-uc.a.run.app",
+  "project": "protocol-215-demo",
+  "bucket": "protocol-215-artifacts-ky20260829"
+}

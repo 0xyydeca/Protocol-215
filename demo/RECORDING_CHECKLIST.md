@@ -37,7 +37,7 @@ Follow narration in `demo/DEMO_SCRIPT.md`.
 - [ ] Cloud Run proof visible (if cloud claim)
 - [ ] Final manifest appears
 - [ ] No exaggerated claims in voiceover (“validated clinical”, “guarantees safety”, “perfect extraction”)
-- [ ] Paste URL into Devpost as `[VIDEO_URL]`
+- [ ] Paste public video URL into Devpost (≤4 min, public not unlisted)
 
 ## Fail / retake if
 

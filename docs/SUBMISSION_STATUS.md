@@ -1,36 +1,25 @@
-# SUBMISSION_STATUS — placeholders & gaps
+# SUBMISSION_STATUS — Protocol 215 hackathon release
 
-## Placeholders still requiring manual completion
+_Last audit: 2026-08-31_
 
-| Placeholder | Where | Action |
+## Final URLs
+
+| Field | Value | Status |
 | --- | --- | --- |
-| `[REPOSITORY_URL]` | README, Devpost | Push to public GitHub/GitLab and paste HTTPS URL |
-| `[HOSTED_URL]` | Devpost | Run `scripts/deploy.sh`; paste Cloud Run web URL |
-| `[VIDEO_URL]` | Devpost | Record ≤4 min; publish YouTube/Vimeo public link |
-| Live Gemini screenshots | Devpost gallery | Only if Mode bar shows Live Gemini |
-| Cloud proof screenshots | Devpost / recording | Only after real deploy |
+| REPOSITORY_URL | https://github.com/0xyydeca/Protocol-215 | Done |
+| HOSTED_URL | https://protocol-215-web-u6nfupvmhq-uc.a.run.app | Done |
+| VIDEO_URL | *Not set in repo — paste in Devpost before submit* | **Blocker** |
 
-## Submission requirements status
+## Release evidence
 
-| Requirement | Status |
+| Item | Location |
 | --- | --- |
-| README with required sections | Done (`README.md`) |
-| Devpost text package | Done (`docs/DEVPOST_SUBMISSION.md`) |
-| Deployment doc | Done (`docs/DEPLOYMENT.md`) |
-| Security review | Done (`docs/SECURITY_REVIEW.md`) |
-| Evaluation results | Done (`docs/EVALUATION_RESULTS.md`) |
-| Third-party notices | Done (`docs/THIRD_PARTY_NOTICES.md`) |
-| Demo script | Done (`demo/DEMO_SCRIPT.md`) |
-| Recording checklist | Done (`demo/RECORDING_CHECKLIST.md`) |
-| Screenshot checklist | Done (`demo/SCREENSHOT_CHECKLIST.md`) |
-| CHANGELOG | Done (`CHANGELOG.md`) |
-| LICENSE | Done (`LICENSE` Apache-2.0) |
-| Architecture image | Done (`docs/architecture.png` / `.mmd`) |
-| Public repo URL | **Pending** — no git remote configured in this workspace |
-| Hosted Cloud Run URL | **Pending** — Terraform apply not required for local pass |
-| Demo video | **Pending** — manual recording |
-| Live Vertex measured eval | **Not done** — results are measured on fake/deterministic IR |
+| Cloud E2E (Final release) | `docs/CLOUD_E2E_RESULTS.md` — PASS @ `web-00014-vjz` / `worker-00012-zvc` |
+| GCP screenshots | `docs/evidence/` |
+| Video evidence map | `docs/VIDEO_EVIDENCE.md` |
+| Checklist | `docs/SUBMISSION_CHECKLIST.md` |
+| Devpost copy | `docs/DEVPOST_SUBMISSION.md` |
 
-## Optional bonus
+## Git tag (after push)
 
-Drafts only: `docs/OPTIONAL_PROMO_DRAFTS.md` (article + LinkedIn). No unrelated model added.
+`hackathon-submission-2026-08-31` — annotated, points at final submission commit.

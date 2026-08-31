@@ -1,28 +1,28 @@
 # Cloud E2E Results
 
-_Last updated: 2026-08-30T01:39:16.571115+00:00 (UTC)_
+_Last updated: 2026-08-31T04:31:10.254958+00:00 (UTC)_
 
-## Verdict
+Automated acceptance for the hosted Google Cloud demo. The **Final release E2E** section is the authoritative PASS for the current submission commit and revisions.
+
+## Final release E2E
 
 **PASS**
 
-## Evidence
-
 | Field | Value |
 | --- | --- |
-| commit_sha | `6ee7f018c6c30efc8f03cae4856285edd0568dd1` |
+| commit_sha | `1bdf964f893d1298f6595c5631a4df928d6f3110` |
 | web_url | `https://protocol-215-web-u6nfupvmhq-uc.a.run.app` |
-| web_revision | `protocol-215-web-00010-hnm` |
-| worker_revision | `protocol-215-worker-00008-pz8` |
+| web_revision | `protocol-215-web-00014-vjz` |
+| worker_revision | `protocol-215-worker-00012-zvc` |
 | gemini_model | `gemini-3.5-flash` |
-| run_id | `run-694ee197-0c66-4a26-9055-834572fac0ff` |
-| correlation_id | `run-694ee197-0c66-4a26-9055-834572fac0ff` |
-| start_event_id | `evt-fdae79a0-a7d3-4ab3-bd59-c57f28953d65` |
-| session_id | `550c56fc-003c-453b-883b-c0795d130fa8` |
-| invocation_id | `e-c2a0da94-f004-40dc-9d3d-b4c2349c18e1` |
-| elapsed_seconds | 97.4 |
+| run_id | `run-27ad9b01-49f9-49ee-81da-96956508ccd3` |
+| correlation_id | `run-27ad9b01-49f9-49ee-81da-96956508ccd3` |
+| start_event_id | `evt-bf617a0b-a511-45ca-8074-70cbea182602` |
+| session_id | `c162b07d-eb8f-4173-8891-018b2fa5b0c5` |
+| invocation_id | `e-f10471b3-1e50-4d73-98c3-942975abe8f2` |
+| elapsed_seconds | 120.7 |
 
-## Adapter honesty
+### Adapter honesty
 
 ```json
 {
@@ -33,13 +33,13 @@ _Last updated: 2026-08-30T01:39:16.571115+00:00 (UTC)_
 }
 ```
 
-## Checkpoint path observed
+### Checkpoint path observed
 
 ```
-CREATED → IntakeValidator → SemanticDiff → ActionPlanner → SafeActionExecutor → ApprovalRouter
+CREATED → IntakeValidator → CompileOldProtocol → TrialTwinSimulator → SafeActionExecutor → ApprovalRouter
 ```
 
-## Assertions
+### Assertions
 
 - [x] healthz
 - [x] web_traffic_100
@@ -77,3 +77,18 @@ CREATED → IntakeValidator → SemanticDiff → ActionPlanner → SafeActionExe
 - [x] all_invariants_pass
 - [x] audit_chain_verifies
 
+## Historical E2E runs
+
+### E2E run (2026-08-30 — commit `6ee7f018`, revisions web-00010 / worker-00008)
+
+**PASS** — superseded by Final release E2E above.
+
+| Field | Value |
+| --- | --- |
+| commit_sha | `6ee7f018c6c30efc8f03cae4856285edd0568dd1` |
+| web_revision | `protocol-215-web-00010-hnm` |
+| worker_revision | `protocol-215-worker-00008-pz8` |
+| run_id | `run-694ee197-0c66-4a26-9055-834572fac0ff` |
+| elapsed_seconds | 97.4 |
+
+Full assertion list preserved in git history for commit `6ee7f018`.
