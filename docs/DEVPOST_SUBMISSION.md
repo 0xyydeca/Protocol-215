@@ -71,12 +71,13 @@ Hand-authored synthetic **AURORA-101** protocol PDFs and twin JSON under `fixtur
 - 25 failure/hardening scenarios + evaluation harness  
 - Judge UI fixes: approval pause vs stall, resume proof IDs, Trial Twin roster counts  
 
-## Future work
+## Future directions
 
-- Broader synthetic protocol scenarios  
-- Additional site capability models  
-- Formal evaluation on heterogeneous protocol formats  
-- Production regulatory validation (**explicitly not part of this prototype**)  
+The hosted Cloud Run demo is **live and verified today** ([`docs/CLOUD_E2E_RESULTS.md`](CLOUD_E2E_RESULTS.md)). What comes next is not removing human oversight — it is making preflight faster, broader, and continuously aware of operational reality.
+
+**Lower latency, measured not guessed.** Measured E2E runs on the hosted demo completed in roughly two minutes wall time (final release: 120.7s; see E2E report). Future work would parallelize old/new protocol compilation, reuse validated Protocol IRs keyed by document SHA-256, apply Vertex AI context caching for recurring base protocols, and reduce Cloud Run cold-start overhead — while keeping deterministic diff, policy gates, and audit non-negotiable.
+
+**Continuous assurance and interoperability.** The Trial Twin could re-rehearse incrementally when site approval, training, inventory, storage, or courier conditions change, recomputing only affected branches. Longer term, Protocol 215 could align outputs with CDISC USDM and emit draft-first integrations for EDC, CTMS, lab, and supply systems — read-only or draft by default, with Gemini still limited to PDF → IR extraction. Broader synthetic scenarios, multi-country workflows, and formal evaluation metrics (latency, human-review burden) would strengthen confidence before any regulated use — which this prototype explicitly does not claim.
 
 ## Safety limitations
 
@@ -94,9 +95,9 @@ Recording mode: `?demo=1`
 
 ## Video URL
 
-**Pending Devpost paste** — upload a **public** (not unlisted) YouTube or Vimeo demo **under 4 minutes**, then paste the URL into Devpost (not required in git).
+https://www.youtube.com/watch?v=UFrc7f-7HBE
 
-Follow `demo/DEMO_SCRIPT.md`, `docs/VIDEO_EVIDENCE.md`, and `docs/SUBMISSION_CHECKLIST.md`.
+Public YouTube demo (English). Follow `demo/DEMO_SCRIPT.md`, `docs/VIDEO_EVIDENCE.md`, and `docs/SUBMISSION_CHECKLIST.md` for timestamp ↔ evidence mapping.
 
 ## Built with (disclosure)
 

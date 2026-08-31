@@ -18,7 +18,8 @@
 | **Recording mode** | https://protocol-215-web-u6nfupvmhq-uc.a.run.app/?demo=1 |
 | **Track** | The Taskmaster (async agentic workflow) |
 | **Runtime model** | `gemini-3.5-flash` via Vertex AI |
-| **Latest verified E2E** | 2026-08-30 — [`docs/CLOUD_E2E_RESULTS.md`](docs/CLOUD_E2E_RESULTS.md) (**PASS**) |
+| **Latest verified E2E** | 2026-08-31 — [`docs/CLOUD_E2E_RESULTS.md`](docs/CLOUD_E2E_RESULTS.md) (**PASS**, 120.7s wall time) |
+| **Demo video** | https://www.youtube.com/watch?v=UFrc7f-7HBE |
 
 **Cloud stack (measured on hosted demo):** Cloud Run web · Cloud Storage · Pub/Sub · private Cloud Run worker · Google ADK 2.x · Vertex Gemini · Firestore · deterministic policy + Trial Twin.
 
@@ -257,12 +258,63 @@ Highlights: PDF untrusted; tool-less extraction; allowlisted tools; code authori
 - Not for real PHI, real trials, or regulatory submission
 - Production regulatory validation is explicitly out of scope
 
-## 22. Future work (honest)
+## 22. Future directions
 
-- Broader synthetic protocol scenarios
-- Additional site capability models in the Trial Twin
-- Formal evaluation on heterogeneous protocol formats
-- Production regulatory validation and GxP qualification (**not** claimed by this prototype)
+Protocol 215's next phase is not to remove human oversight. It is to make clinical amendment preflight **faster**, **broader**, **more interoperable**, and **more continuously aware** of operational reality.
+
+These are research and product directions — not current functionality. Safety, evidence validation, and policy enforcement remain non-negotiable in every phase.
+
+### Faster time-to-decision
+
+Measured cloud E2E passes on the hosted demo completed in roughly **two minutes** wall time ([`docs/CLOUD_E2E_RESULTS.md`](docs/CLOUD_E2E_RESULTS.md); final release run: **120.7s**; an earlier verified run: **97.4s**). That is acceptable for a first proof of concept with live Vertex compilation, full checkpoint persistence, and human approval — not a defect to apologize for.
+
+Future optimization would focus on:
+
+- **Parallel compilation** of old and amended protocols instead of sequential IR extraction
+- **SHA-256 keyed reuse** of validated Protocol IRs when document hashes match prior runs
+- **Vertex AI context caching** for recurring base protocols across amendment cycles
+- **Cloud Run startup CPU boost** and selectively configured warm instances for high-priority workflows
+- **p50 and p95 stage-level latency** measurement so improvements are evidence-backed, not guessed
+
+We would not trade away deterministic diff, Trial Twin rehearsal, GREEN/AMBER/RED authorization, or hash-chained audit for speed. Any latency target would be set only after stage-level measurements exist.
+
+### Continuous amendment assurance
+
+Today, rehearsal runs when an operator uploads a new amendment pair. A natural extension is **event-triggered re-rehearsal** when operational state changes — site approval, training completion, inventory, storage conditions, equipment availability, courier logistics, or participant visit state.
+
+Only **affected Trial Twin branches** would be recomputed incrementally rather than replaying the entire workflow from scratch. Human approval and policy gates would still apply to any newly surfaced AMBER actions.
+
+### Standards-based interoperability
+
+Future work could align Protocol IR and amendment manifests more closely with **CDISC USDM** and other structured-protocol standards so outputs are legible to downstream clinical systems.
+
+Integrations with EDC, CTMS, laboratory, supply, and document systems would default to **read-only observation** or **draft-first export** — never silent write-back. Gemini would remain limited to **PDF → Protocol IR extraction**; it would not receive unrestricted access to production clinical systems.
+
+### Broader and more rigorous Trial Twins
+
+The AURORA-101 demo exercises one synthetic amendment with three sites and five participants. A mature evaluation program would add:
+
+- Additional synthetic protocol types and amendment patterns
+- Multi-country approval and activation workflows
+- Consent version transitions and visit immutability edge cases
+- Laboratory and supply capacity constraints
+- Participant burden modeling
+- Larger heterogeneous evaluation sets with published latency and human-review burden metrics
+
+### Path toward regulated use
+
+**This repository is a synthetic proof of concept.** It is not GxP-validated and must not be used with real PHI or production trial systems.
+
+Any path toward regulated use would require, at minimum:
+
+- Formal validation against defined acceptance criteria
+- Role-based access control and audit review workflows
+- Privacy and security assessment
+- Organizational change control
+- Validated integrations with source-of-truth systems
+- Appropriate GxP governance and qualified infrastructure
+
+The long-term goal is **not** autonomous clinical decision-making. It is to give clinical teams **earlier, clearer, and safer evidence** about how an amendment will behave before implementation begins.
 
 ## 23. Development-tool disclosure
 
@@ -324,6 +376,6 @@ Then verify Console for leftover Artifact Registry images, logs, and billing ale
 | --- | --- |
 | Repository | https://github.com/0xyydeca/Protocol-215 |
 | Hosted demo | https://protocol-215-web-u6nfupvmhq-uc.a.run.app |
-| Demo video | *Pending — paste public YouTube/Vimeo URL in Devpost before final submit* |
+| Demo video | https://www.youtube.com/watch?v=UFrc7f-7HBE |
 
 See `docs/SUBMISSION_CHECKLIST.md`, `docs/DEVPOST_SUBMISSION.md`, `docs/evidence/`, and `docs/CLOUD_E2E_RESULTS.md`.
