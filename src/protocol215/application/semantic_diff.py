@@ -392,7 +392,7 @@ def _canonicalize_aurora_change_ids(changes: list[SemanticChange]) -> list[Seman
         }:
             kind = str(after.get("kind") or before.get("kind") or "").lower()
             value = after.get("value", before.get("value"))
-            if "fast" in kind and value in {4, 4.0, "4", "4.0"}:
+            if "fast" in kind and value in {4, "4", "4.0"}:
                 gold_id = "CHG-003-FASTING-4H"
         elif (
             change.concept_type == "edc_field"

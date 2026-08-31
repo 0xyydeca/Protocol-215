@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any
 
 from google.adk.runners import Runner
 from google.genai import types
@@ -32,8 +32,6 @@ from protocol215.workflow.runtime import WorkflowRuntime, clear_runtime, registe
 
 logger = logging.getLogger("protocol215.cloud.driver")
 
-_T = TypeVar("_T")
-
 _TERMINAL_OR_PAUSE = {
     WorkflowStatus.AWAITING_APPROVAL,
     WorkflowStatus.COMPLETED,
@@ -44,7 +42,7 @@ _TERMINAL_OR_PAUSE = {
 }
 
 
-def _run_coro(factory: Callable[[], Awaitable[_T]]) -> _T:
+def _run_coro[T](factory: Callable[[], Coroutine[Any, Any, T]]) -> T:
     """Run an async coroutine from sync code, including under a running event loop.
 
     Cloud Run workers use FastAPI/uvicorn, so ``asyncio.run`` inside the request
