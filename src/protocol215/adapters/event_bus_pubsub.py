@@ -33,7 +33,7 @@ class PubSubEventBus:
         if publisher is not None:
             self._publisher = publisher
         else:
-            from google.cloud import pubsub_v1  # type: ignore[attr-defined]
+            from google.cloud import pubsub_v1
 
             self._publisher = pubsub_v1.PublisherClient()
         self._handlers: dict[str, list[Any]] = {}

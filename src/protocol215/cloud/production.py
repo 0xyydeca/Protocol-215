@@ -169,7 +169,7 @@ def create_production_worker_app(settings: Settings | None = None) -> FastAPI:
             add("firestore_readable", False, f"{type(exc).__name__}: {exc}")
 
         try:
-            from google.cloud import storage as gcs  # type: ignore[attr-defined]
+            from google.cloud import storage as gcs
 
             if not cfg.gcs_bucket:
                 add("gcs_readable", False, "GCS_BUCKET unset")
@@ -183,7 +183,7 @@ def create_production_worker_app(settings: Settings | None = None) -> FastAPI:
             add("gcs_readable", False, f"{type(exc).__name__}: {exc}")
 
         try:
-            from google.cloud import pubsub_v1  # type: ignore[attr-defined]
+            from google.cloud import pubsub_v1
 
             pub = pubsub_v1.PublisherClient()
             path = pub.topic_path(cfg.google_cloud_project, cfg.pubsub_topic_received)

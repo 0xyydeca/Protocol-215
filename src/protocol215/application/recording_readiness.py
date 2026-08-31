@@ -110,7 +110,7 @@ def _check_gcs(settings: Settings) -> ReadinessCheck:
     if not settings.google_cloud_project or not settings.gcs_bucket:
         return _fail(name, "GOOGLE_CLOUD_PROJECT and GCS_BUCKET required")
     try:
-        from google.cloud import storage  # type: ignore[attr-defined]
+        from google.cloud import storage
 
         client = storage.Client(project=settings.google_cloud_project)
         bucket = client.bucket(settings.gcs_bucket)
@@ -149,7 +149,7 @@ def _check_pubsub(settings: Settings) -> ReadinessCheck:
         return _fail(name, "GOOGLE_CLOUD_PROJECT required")
     topic = settings.pubsub_topic_received
     try:
-        from google.cloud import pubsub_v1  # type: ignore[attr-defined]
+        from google.cloud import pubsub_v1
 
         client = pubsub_v1.PublisherClient()
         path = client.topic_path(settings.google_cloud_project, topic)
