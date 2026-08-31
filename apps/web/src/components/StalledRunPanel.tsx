@@ -24,7 +24,10 @@ export function StalledRunPanel({
   onReturnLaunch,
 }: Props) {
   const checkpoint = status.checkpoint ?? status.current_stage ?? "unknown";
-  const title = humanizePollStall(checkpoint);
+  const isPollFailure = reason === "poll_failures";
+  const title = isPollFailure
+    ? "Status polling failed"
+    : humanizePollStall(checkpoint);
   const diagnostics = {
     run_id: status.run_id,
     status: status.status,
@@ -55,11 +58,16 @@ export function StalledRunPanel({
   }
 
   return (
-    <div className="state-panel error retryable stalled-run" role="alert" aria-live="assertive">
+    <div
+      className={`state-panel error retryable stalled-run${isPollFailure ? " poll-failures" : ""}`}
+      role="alert"
+      aria-live="assertive"
+      data-testid={isPollFailure ? "poll-failure-panel" : "stalled-run-panel"}
+    >
       <h3>{title}</h3>
       <p>
-        {reason === "poll_failures"
-          ? "Three consecutive status requests failed. The UI is not inventing progress — retry or return to launch."
+        {isPollFailure
+          ? "Three consecutive status requests failed. Polling failed — the workflow itself is not assumed stalled. Retry or return to launch."
           : "Status and state_version have not changed for 45+ seconds. Backend state was not modified by this panel."}
       </p>
       <dl className="stalled-meta">

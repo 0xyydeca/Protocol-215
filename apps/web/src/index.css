@@ -910,6 +910,16 @@ select:focus-visible,
   border-color: var(--block);
 }
 
+.state-panel.awaiting-approval {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 10%, #fff);
+}
+
+.state-panel.awaiting-approval h3 {
+  color: var(--warn);
+  letter-spacing: 0.02em;
+}
+
 .state-panel h3 {
   margin: 0 0 0.35rem;
 }

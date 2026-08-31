@@ -56,9 +56,18 @@ def build_run_status(
                 affected_participant_id=apr.affected_participant_id,
                 expected_state_version=apr.expected_state_version,
                 reason_approval_required=apr.reason_approval_required,
+                session_id=apr.session_id,
                 interrupt_id=apr.interrupt_id,
                 invocation_id=apr.invocation_id,
             )
+
+    session_meta = service.state.get_session_metadata(run_id)
+    session_id = session_meta.session_id if session_meta else None
+    invocation_id = session_meta.invocation_id if session_meta else None
+    if session_id is None and pending is not None:
+        session_id = pending.session_id
+    if invocation_id is None and pending is not None:
+        invocation_id = pending.invocation_id
 
     seq = list(run.event_sequence)
     last_event = seq[-1] if seq else None
@@ -111,6 +120,8 @@ def build_run_status(
         checkpoint=run.checkpoint,
         created_at=run.created_at,
         event_sequence=seq,
+        session_id=session_id,
+        invocation_id=invocation_id,
         updated_at=run.updated_at or run.created_at,
         last_checkpoint_at=run.last_checkpoint_at,
         last_worker_event_id=run.last_worker_event_id or (seq[-1] if seq else None),

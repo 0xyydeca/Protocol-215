@@ -43,16 +43,22 @@ export function ManifestView({
         (a.executed || a.status === "executed") &&
         !a.approved,
     );
-    const sites = new Set(
-      [...manifest.findings, ...manifest.actions]
-        .map((x) => ("site_id" in x ? x.site_id : null))
-        .filter(Boolean),
-    );
-    const participants = new Set(
-      [...manifest.findings, ...manifest.actions]
-        .map((x) => ("participant_id" in x ? x.participant_id : null))
-        .filter(Boolean),
-    );
+    const sites =
+      typeof manifest.sites_evaluated_count === "number"
+        ? manifest.sites_evaluated_count
+        : new Set(
+            [...manifest.findings, ...manifest.actions]
+              .map((x) => ("site_id" in x ? x.site_id : null))
+              .filter(Boolean),
+          ).size;
+    const participants =
+      typeof manifest.participants_evaluated_count === "number"
+        ? manifest.participants_evaluated_count
+        : new Set(
+            [...manifest.findings, ...manifest.actions]
+              .map((x) => ("participant_id" in x ? x.participant_id : null))
+              .filter(Boolean),
+          ).size;
     const withEvidence = manifest.changes.filter(
       (c) =>
         (c.old_evidence?.length ?? 0) +
@@ -85,8 +91,8 @@ export function ManifestView({
       duplicateActions,
       completedVisitsAltered: completedVisitsAltered.length,
       siteVersionConflicts: siteVersionConflicts.length,
-      sites: sites.size,
-      participants: participants.size,
+      sites,
+      participants,
       evidenceCoverage: manifest.changes.length
         ? Math.round((withEvidence.length / manifest.changes.length) * 100)
         : 0,

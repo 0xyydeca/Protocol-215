@@ -53,7 +53,11 @@ export function SyntheticBanner() {
   );
 }
 
-/** Visible resume identity strip — values only from backend. */
+function hasIdentity(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/** Visible resume identity strip — values only from persisted backend IDs. */
 export function ResumeProofBanner({
   runId,
   status,
@@ -75,23 +79,29 @@ export function ResumeProofBanner({
     return null;
   }
   return (
-    <aside className="resume-proof" aria-live="polite" data-status={status}>
+    <aside className="resume-proof" aria-live="polite" data-status={status} data-testid="resume-proof">
       <strong>Resume proof</strong>
       <span className="resume-flow" aria-label="Status transitions">
-        AWAITING_APPROVAL → RESUMING → VERIFYING
+        AWAITING_APPROVAL → RESUMING → VERIFYING → COMPLETED
       </span>
       <span>
         Now: <code>{status}</code>
       </span>
-      <span>
-        Run: <code>{runId ?? "—"}</code>
-      </span>
-      <span>
-        Session: <code>{sessionId ?? "—"}</code>
-      </span>
-      <span>
-        Invocation: <code>{invocationId ?? "—"}</code>
-      </span>
+      {hasIdentity(runId) ? (
+        <span>
+          Run: <code>{runId}</code>
+        </span>
+      ) : null}
+      {hasIdentity(sessionId) ? (
+        <span>
+          Session: <code>{sessionId}</code>
+        </span>
+      ) : null}
+      {hasIdentity(invocationId) ? (
+        <span>
+          Invocation: <code>{invocationId}</code>
+        </span>
+      ) : null}
     </aside>
   );
 }

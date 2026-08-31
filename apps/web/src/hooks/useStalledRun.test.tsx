@@ -45,8 +45,70 @@ describe("useStalledRun", () => {
     expect(result.current.reason).toBe("stale_progress");
   });
 
+  it("still stalls on unchanged COMPILING after 45 seconds", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() =>
+      useStalledRun(
+        status({ status: "COMPILING", checkpoint: "CompileOldProtocol", state_version: 2 }),
+        0,
+      ),
+    );
+    act(() => {
+      vi.advanceTimersByTime(STALL_THRESHOLD_MS + 2000);
+    });
+    expect(result.current.stalled).toBe(true);
+    expect(result.current.reason).toBe("stale_progress");
+  });
+
+  it("never treats AWAITING_APPROVAL as stale progress after 45 seconds", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() =>
+      useStalledRun(
+        status({
+          status: "AWAITING_APPROVAL",
+          checkpoint: "ApprovalRouter",
+          current_stage: "ApprovalRouter",
+          state_version: 9,
+        }),
+        0,
+      ),
+    );
+    act(() => {
+      vi.advanceTimersByTime(STALL_THRESHOLD_MS + 10_000);
+    });
+    expect(result.current.stalled).toBe(false);
+    expect(result.current.reason).toBeNull();
+  });
+
+  it("never treats COMPLETED / MANIFEST_READY / FAILED_TERMINAL as stale progress", () => {
+    vi.useFakeTimers();
+    for (const s of ["COMPLETED", "COMPLETED_WITH_BLOCKS", "MANIFEST_READY", "FAILED_TERMINAL"] as const) {
+      const { result } = renderHook(() =>
+        useStalledRun(status({ status: s, checkpoint: "VerifyInvariants" }), 0),
+      );
+      act(() => {
+        vi.advanceTimersByTime(STALL_THRESHOLD_MS + 5000);
+      });
+      expect(result.current.stalled).toBe(false);
+    }
+  });
+
   it("stalls after three consecutive poll failures", () => {
     const { result } = renderHook(() => useStalledRun(status(), 3));
+    expect(result.current.stalled).toBe(true);
+    expect(result.current.reason).toBe("poll_failures");
+  });
+
+  it("reports poll_failures while awaiting approval (network diagnostic, not stall)", () => {
+    const { result } = renderHook(() =>
+      useStalledRun(
+        status({
+          status: "AWAITING_APPROVAL",
+          checkpoint: "ApprovalRouter",
+        }),
+        3,
+      ),
+    );
     expect(result.current.stalled).toBe(true);
     expect(result.current.reason).toBe("poll_failures");
   });

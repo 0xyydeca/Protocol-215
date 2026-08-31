@@ -359,6 +359,8 @@ class AmendmentAppService:
             actions=actions,
             invariants=invariants,
             generated_at=self.clock.now(),
+            sites_evaluated_count=len(sites),
+            participants_evaluated_count=len(participants),
         )
         self.state.save_manifest(manifest)
         key = f"runs/{run_id}/manifest.json"

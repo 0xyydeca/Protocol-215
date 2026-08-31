@@ -98,9 +98,14 @@ def test_run_status_includes_diagnostic_fields(tmp_path) -> None:
         "worker_revision",
         "actual_adapters",
         "compiler_model",
+        "session_id",
+        "invocation_id",
     ):
         assert key in body, key
     assert body["correlation_id"] == run_id
     assert body["compiler_model"]
     assert isinstance(body["actual_adapters"], dict)
     assert body["actual_adapters"].get("event_bus")
+    # Session metadata is created when the run is accepted.
+    assert body["session_id"]
+    assert body["session_id"].startswith("sess-") or len(body["session_id"]) > 0

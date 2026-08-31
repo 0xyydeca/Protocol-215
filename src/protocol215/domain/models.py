@@ -350,6 +350,9 @@ class AmendmentReleaseManifest(BaseModel):
     actions: list[ActionExecution] = Field(default_factory=list)
     invariants: list[InvariantResult] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=utc_now)
+    # Trial Twin roster sizes (full loaded twin, not finding/action refs)
+    sites_evaluated_count: int = 0
+    participants_evaluated_count: int = 0
 
 
 class WorkflowRun(BaseModel):

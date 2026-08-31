@@ -83,6 +83,7 @@ export type PendingApprovalSummary = {
   affected_participant_id?: string | null;
   expected_state_version: number;
   reason_approval_required: string;
+  session_id?: string | null;
   interrupt_id?: string | null;
   invocation_id?: string | null;
 };
@@ -105,6 +106,9 @@ export type RunStatus = {
   checkpoint: string | null;
   created_at: string;
   event_sequence: string[];
+  /** Persisted ADK session / invocation identity for resume proof. */
+  session_id?: string | null;
+  invocation_id?: string | null;
   /** Diagnostic fields for stalled-run detection (backend-authored). */
   updated_at?: string | null;
   last_checkpoint_at?: string | null;
@@ -243,6 +247,9 @@ export type Manifest = {
   actions: ActionExecution[];
   invariants: InvariantResult[];
   generated_at: string;
+  /** Trial Twin roster sizes (not derived from finding/action references). */
+  sites_evaluated_count?: number | null;
+  participants_evaluated_count?: number | null;
 };
 
 export type AuditVerify = {

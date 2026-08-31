@@ -34,6 +34,7 @@ class PendingApprovalSummary(BaseModel):
     affected_participant_id: str | None = None
     expected_state_version: int = 0
     reason_approval_required: str = ""
+    session_id: str | None = None
     interrupt_id: str | None = None
     invocation_id: str | None = None
 
@@ -56,6 +57,9 @@ class RunStatusResponse(BaseModel):
     checkpoint: str | None = None
     created_at: datetime
     event_sequence: list[str] = Field(default_factory=list)
+    # Persisted ADK session / invocation identity (resume proof; not display-only)
+    session_id: str | None = None
+    invocation_id: str | None = None
     # Stalled-run / recording diagnostics (safe for UI; no secrets / CoT)
     updated_at: datetime | None = None
     last_checkpoint_at: datetime | None = None

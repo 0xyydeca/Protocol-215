@@ -15,6 +15,7 @@ import type {
   ViewId,
 } from "./api/types";
 import { ApiDiagnostics } from "./components/ApiDiagnostics";
+import { AwaitingApprovalPanel } from "./components/AwaitingApprovalPanel";
 import { ResumeProofBanner, StageIndicator, SyntheticBanner } from "./components/Chrome";
 import { ModeBar } from "./components/ModeBar";
 import { ErrorState } from "./components/States";
@@ -200,10 +201,21 @@ export default function App() {
 
   const pendingApproval = (approvals ?? []).find((a) => a.status === "pending") ?? null;
 
+  const sessionId =
+    status?.session_id ?? pendingApproval?.session_id ?? status?.pending_approval?.session_id ?? null;
+  const invocationId =
+    status?.invocation_id ??
+    pendingApproval?.invocation_id ??
+    status?.pending_approval?.invocation_id ??
+    null;
+
   const cloudMode =
     ready?.execution_mode === "cloud" ||
     ready?.app_env === "cloud" ||
     status?.execution_mode === "cloud";
+
+  const showAwaitingApprovalPanel =
+    status?.status === "AWAITING_APPROVAL" && !(stall.stalled && stall.reason === "poll_failures");
 
   return (
     <div className="app" data-recording={recordingMode ? "true" : "false"}>
@@ -246,10 +258,12 @@ export default function App() {
       <ResumeProofBanner
         runId={runId}
         status={status?.status ?? null}
-        sessionId={pendingApproval?.session_id ?? status?.pending_approval?.interrupt_id}
-        invocationId={pendingApproval?.invocation_id ?? status?.pending_approval?.invocation_id}
+        sessionId={sessionId}
+        invocationId={invocationId}
       />
       <ViewNav active={view} onChange={setView} unlocked={unlocked} />
+
+      {showAwaitingApprovalPanel && status && <AwaitingApprovalPanel status={status} />}
 
       {stall.stalled && status && (
         <StalledRunPanel

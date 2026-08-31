@@ -376,6 +376,17 @@
             "title": "Reason Approval Required",
             "type": "string"
           },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
           "tool_name": {
             "anyOf": [
               {
@@ -583,6 +594,17 @@
             "title": "From Version",
             "type": "string"
           },
+          "invocation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invocation Id"
+          },
           "last_checkpoint_at": {
             "anyOf": [
               {
@@ -658,6 +680,17 @@
           "run_id": {
             "title": "Run Id",
             "type": "string"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
           },
           "state_version": {
             "default": 0,

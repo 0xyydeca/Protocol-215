@@ -354,6 +354,8 @@ describe("ManifestView", () => {
       ],
       invariants: [{ invariant_id: "INV-1", name: "no_red", passed: true, message: "ok" }],
       generated_at: "2026-08-21T00:00:00Z",
+      sites_evaluated_count: 3,
+      participants_evaluated_count: 5,
     };
     render(
       <ManifestView
@@ -377,5 +379,50 @@ describe("ManifestView", () => {
     expect(screen.getByText(/Intact/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download JSON/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Print-ready HTML/i })).toBeInTheDocument();
+    expect(screen.getByText("Sites evaluated").closest("div")?.querySelector("dd")?.textContent).toBe(
+      "3",
+    );
+    expect(
+      screen.getByText("Participants evaluated").closest("div")?.querySelector("dd")?.textContent,
+    ).toBe("5");
+  });
+
+  it("uses backend rehearsal roster counts rather than deriving from findings", () => {
+    const manifest: Manifest = {
+      run_id: "run-y",
+      study_id: "AURORA-101",
+      from_version: "1.0",
+      to_version: "2.0",
+      changes: [],
+      findings: [
+        {
+          finding_id: "F1",
+          code: "X",
+          severity: "blocker",
+          summary: "one",
+          site_id: "SITE-001",
+          participant_id: "P002",
+        },
+      ],
+      actions: [],
+      invariants: [],
+      generated_at: "2026-08-21T00:00:00Z",
+      sites_evaluated_count: 3,
+      participants_evaluated_count: 5,
+    };
+    render(
+      <ManifestView
+        meta={null}
+        status={{ status: "COMPLETED" } as RunStatus}
+        manifest={manifest}
+        audit={null}
+        loading={false}
+        error={null}
+        onRetry={() => undefined}
+      />,
+    );
+    expect(
+      screen.getByText("Participants evaluated").closest("div")?.querySelector("dd")?.textContent,
+    ).toBe("5");
   });
 });
