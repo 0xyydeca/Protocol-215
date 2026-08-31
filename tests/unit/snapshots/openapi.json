@@ -864,6 +864,27 @@
         "summary": "Demo Reset"
       }
     },
+    "/api/healthz": {
+      "get": {
+        "description": "Liveness. Prefer /livez or /api/healthz \u2014 some Google frontends 404 bare /healthz.",
+        "operationId": "healthz_api_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Healthz Api Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
     "/api/runs": {
       "get": {
         "operationId": "list_runs_api_runs_get",
@@ -1380,6 +1401,7 @@
     },
     "/healthz": {
       "get": {
+        "description": "Liveness. Prefer /livez or /api/healthz \u2014 some Google frontends 404 bare /healthz.",
         "operationId": "healthz_healthz_get",
         "responses": {
           "200": {
@@ -1388,6 +1410,27 @@
                 "schema": {
                   "additionalProperties": true,
                   "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/livez": {
+      "get": {
+        "description": "Liveness. Prefer /livez or /api/healthz \u2014 some Google frontends 404 bare /healthz.",
+        "operationId": "healthz_livez_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Healthz Livez Get",
                   "type": "object"
                 }
               }
